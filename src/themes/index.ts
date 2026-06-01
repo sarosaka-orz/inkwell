@@ -1,0 +1,98 @@
+export interface ThemeDefinition {
+  name: string;
+  label: string;
+  colors: Record<string, string>;
+}
+
+export const themes: ThemeDefinition[] = [
+  {
+    name: "inkwell-dark",
+    label: "Inkwell Dark",
+    colors: {
+      "--color-bg-primary": "#1a1a1a",
+      "--color-bg-secondary": "#171717",
+      "--color-bg-tertiary": "#232323",
+      "--color-bg-hover": "#2f2f2f",
+      "--color-text-primary": "#e8e8e8",
+      "--color-text-secondary": "#9ca3af",
+      "--color-text-muted": "#6b6b6b",
+      "--color-accent": "#d4a574",
+      "--color-accent-hover": "#e0b88a",
+      "--color-border": "#2f2f2f",
+      "--color-danger": "#e55353",
+      "--color-success": "#48bb78",
+    },
+  },
+  {
+    name: "github-dark",
+    label: "GitHub Dark",
+    colors: {
+      "--color-bg-primary": "#171717",
+      "--color-bg-secondary": "#1c1c1c",
+      "--color-bg-tertiary": "#262626",
+      "--color-bg-hover": "#333333",
+      "--color-text-primary": "#e0e0e0",
+      "--color-text-secondary": "#9ca3af",
+      "--color-text-muted": "#6b7280",
+      "--color-accent": "#d4a574",
+      "--color-accent-hover": "#e0b88a",
+      "--color-border": "#333333",
+      "--color-danger": "#f85149",
+      "--color-success": "#3fb950",
+    },
+  },
+  {
+    name: "dracula",
+    label: "Dracula",
+    colors: {
+      "--color-bg-primary": "#1e1e2e",
+      "--color-bg-secondary": "#232336",
+      "--color-bg-tertiary": "#2a2a40",
+      "--color-bg-hover": "#333350",
+      "--color-text-primary": "#e8e8e8",
+      "--color-text-secondary": "#9ca3af",
+      "--color-text-muted": "#6b6b8a",
+      "--color-accent": "#d4a574",
+      "--color-accent-hover": "#e0b88a",
+      "--color-border": "#333350",
+      "--color-danger": "#ff5555",
+      "--color-success": "#50fa7b",
+    },
+  },
+  {
+    name: "solarized-light",
+    label: "Solarized Light",
+    colors: {
+      "--color-bg-primary": "#faf7f0",
+      "--color-bg-secondary": "#f0ead6",
+      "--color-bg-tertiary": "#e8e0cc",
+      "--color-bg-hover": "#ddd5bf",
+      "--color-text-primary": "#586e75",
+      "--color-text-secondary": "#839496",
+      "--color-text-muted": "#b0bec5",
+      "--color-accent": "#b58900",
+      "--color-accent-hover": "#cb9b00",
+      "--color-border": "#d6cdb7",
+      "--color-danger": "#dc322f",
+      "--color-success": "#859900",
+    },
+  },
+  {
+    name: "nord",
+    label: "Nord",
+    colors: {
+      "--color-bg-primary": "#2e3440",
+      "--color-bg-secondary": "#353b49",
+      "--color-bg-tertiary": "#3e4452",
+      "--color-bg-hover": "#474d5c",
+      "--color-text-primary": "#eceff4",
+      "--color-text-secondary": "#d8dee9",
+      "--color-text-muted": "#6b7d8e",
+      "--color-accent": "#d4a574",
+      "--color-accent-hover": "#e0b88a",
+      "--color-border": "#474d5c",
+      "--color-danger": "#bf616a",
+      "--color-success": "#a3be8c",
+    },
+  },
+];
