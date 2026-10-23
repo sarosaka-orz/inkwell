@@ -1,0 +1,71 @@
+/* ── Inkwell design tokens ───────────────────────────────────────────
+   Semantic tokens live here; palettes live in themes.css. Components
+   should reach for these names instead of hardcoded colors.
+   ─────────────────────────────────────────────────────────────────── */
+
+@theme {
+  /* Surfaces */
+  --color-canvas: #101418;
+  --color-paper: #12171c;
+  --color-surface: #171d23;
+  --color-sunken: #1d242b;
+
+  /* Text */
+  --color-ink: #e7e2d8;
+  --color-ink-soft: #a6a296;
+  --color-ink-muted: #6f7169;
+
+  /* Accent — verdigris */
+  --color-accent: #7fae9c;
+  --color-accent-hover: #9ac7b5;
+  --color-accent-contrast: #0e1417;
+  --color-accent-soft: rgba(127, 174, 156, 0.14);
+
+  /* Interaction */
+  --color-hover: rgba(231, 226, 216, 0.06);
+  --color-active: rgba(231, 226, 216, 0.1);
+  --color-line: rgba(231, 226, 216, 0.09);
+  --color-line-soft: rgba(231, 226, 216, 0.05);
+  --color-danger: #e07a6b;
+  --color-success: #7fae9c;
+  --color-selection: rgba(127, 174, 156, 0.28);
+  --color-scrim: rgba(6, 9, 11, 0.55);
+
+  /* Type */
+  --font-ui: "Instrument Sans Variable", "Instrument Sans", system-ui, -apple-system,
+    "Segoe UI", sans-serif;
+  --font-document: "Literata Variable", "Literata", Georgia, "Times New Roman", serif;
+  --font-mono: "JetBrains Mono Variable", "JetBrains Mono", ui-monospace, "SFMono-Regular",
+    Consolas, monospace;
+
+  /* Radii — small for controls, medium for popovers, large for dialogs */
+  --radius-xs: 3px;
+  --radius-sm: 5px;
+  --radius-md: 8px;
+  --radius-lg: 12px;
+  --radius-xl: 16px;
+
+  /* Elevation */
+  --shadow-card: 0 12px 32px -12px rgba(0, 0, 0, 0.6),
+    0 0 0 1px rgba(231, 226, 216, 0.06);
+  --shadow-dock: 0 18px 40px -18px rgba(0, 0, 0, 0.7),
+    0 0 0 1px rgba(231, 226, 216, 0.08);
+  --shadow-modal: 0 32px 90px -32px rgba(0, 0, 0, 0.78),
+    0 0 0 1px rgba(231, 226, 216, 0.08);
+
+}
+
+:root {
+  --topbar-h: 46px;
+  --statusbar-h: 30px;
+  --drawer-w: 300px;
+  --editor-measure: 68ch;
+
+  --z-content: 0;
+  --z-dock: 30;
+  --z-topbar: 40;
+  --z-scrim: 60;
+  --z-drawer: 70;
+  --z-modal: 80;
+  --z-toast: 90;
+}
