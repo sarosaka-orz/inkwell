@@ -16,6 +16,7 @@ import { ToastContainer } from "./components/Toast/Toast";
 export default function App() {
   const theme = useEditorStore((s) => s.theme);
   const overlay = useEditorStore((s) => s.overlay);
+  const mode = useEditorStore((s) => s.mode);
   const setRecentFiles = useEditorStore((s) => s.setRecentFiles);
 
   useGlobalShortcuts();
@@ -74,7 +75,7 @@ export default function App() {
       {overlay === "command" && <CommandPalette />}
       {overlay === "settings" && <SettingsModal />}
       {overlay === "table" && <InsertTableModal />}
-      {overlay === null && <FormattingDock />}
+      {overlay === null && mode !== "preview" && <FormattingDock />}
       <ToastContainer />
     </div>
   );

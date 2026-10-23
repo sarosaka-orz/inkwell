@@ -10,7 +10,7 @@ Inkwell is a cross-platform desktop application that renders Markdown seamlessly
 
 ### ✍️ True WYSIWYG & Live Preview Editing
 - **Intelligent Syntax Conceal/Reveal**: Markdown delimiters (`#`, `**`, `_`, `~~`, `==`, `[]()`) hide automatically for a clean reading view and reveal instantly when your cursor focuses on the token or line.
-- **Dual View Modes**: Switch between **Live WYSIWYG Mode** and **Source Code Mode** (`Ctrl+/`) with line numbers and gutters.
+- **Three View Modes**: Write with **Live WYSIWYG**, read a clean, read-only **Preview**, or edit raw **Source Code** with line numbers and gutters (`Ctrl+/` source, `Ctrl+Shift+E` read).
 - **Smart Markdown Typing**: Automatic list continuation (`- `, `* `, `+ `, `1. `, `- [ ] `), empty item clearing on Enter, and Tab / Shift+Tab indentation.
 
 ### 📐 Rich Content Ecosystem
@@ -35,6 +35,7 @@ Inkwell is a cross-platform desktop application that renders Markdown seamlessly
 - **Library drawer**: files, outline, and recents open as an overlay (`Ctrl+\`) without reflowing the page.
 - **Command palette (`Ctrl+P`)**: every document, view, theme, and formatting action in one searchable list. `>` filters commands, `@` jumps to a heading.
 - **Selection-triggered formatting dock**: formatting appears when you select text and can be pinned when you want it around.
+- **Smooth caret**: an optional VS Code-style glide between caret positions, on by default.
 - **Accessible by default**: dialogs trap focus and restore it on close, Escape dismisses layers, tabs and palette results are keyboard-operable, and motion respects `prefers-reduced-motion`.
 
 ### 🎨 Themes & Customization
@@ -71,6 +72,7 @@ Inkwell is a cross-platform desktop application that renders Markdown seamlessly
 | `Ctrl+F` | Find & Replace Panel |
 | `Ctrl+Shift+F` | Pin / Unpin Formatting Dock |
 | `Ctrl+/` | Toggle WYSIWYG / Source Code Mode |
+| `Ctrl+Shift+E` | Toggle Read (Preview) Mode |
 | `Ctrl+B` | Bold (`**text**`) |
 | `Ctrl+I` | Italic (`*text*`) |
 | `Ctrl+K` | Insert Hyperlink |

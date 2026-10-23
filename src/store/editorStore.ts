@@ -31,10 +31,11 @@ export interface Settings {
   typewriterMode: boolean;
   focusMode: boolean;
   fullWidth: boolean;
+  smoothCaret: boolean;
   defaultExportPath: string;
 }
 
-export type EditorMode = "live" | "source";
+export type EditorMode = "live" | "source" | "preview";
 export type SidebarTab = "files" | "outline" | "recent";
 export type SaveStatus = "saved" | "saving" | "unsaved";
 export type Overlay = "sidebar" | "command" | "settings" | "table" | null;
@@ -63,6 +64,7 @@ interface EditorState {
   mode: EditorMode;
   setMode: (mode: EditorMode) => void;
   toggleMode: () => void;
+  toggleReadMode: () => void;
 
   // Sidebar & workspace
   sidebarTab: SidebarTab;
@@ -167,6 +169,7 @@ const loadInitialSettings = (): Settings => {
     typewriterMode: false,
     focusMode: false,
     fullWidth: false,
+    smoothCaret: true,
     defaultExportPath: "",
   };
   try {
@@ -204,6 +207,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   mode: "live",
   setMode: (mode) => set({ mode }),
   toggleMode: () => set((state) => ({ mode: state.mode === "live" ? "source" : "live" })),
+  toggleReadMode: () =>
+    set((state) => ({ mode: state.mode === "preview" ? "live" : "preview" })),
 
   sidebarTab: "files",
   currentFolder: null,
@@ -325,6 +330,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     set((state) => ({
       tabs: [...state.tabs, tab],
       activeTabId: id,
+      // A new document is for writing, even if the last one was being read.
+      mode: "live",
     }));
   },
 

@@ -51,10 +51,10 @@ export function StatusBar() {
                 <span className="tabular-nums">{stats.readingMinutes} min read</span>
               </>
             )}
-            {mode === "source" && (
+            {mode !== "live" && (
               <>
                 <span aria-hidden className="h-2.5 w-px bg-[var(--color-line)]" />
-                <span>Source</span>
+                <span>{mode === "source" ? "Source" : "Preview"}</span>
               </>
             )}
           </>
@@ -64,14 +64,14 @@ export function StatusBar() {
       </div>
 
       <div className="flex shrink-0 items-center gap-2.5">
-        {activeTab && (
+        {activeTab && mode !== "preview" && (
           <span className="tabular-nums">
             Ln {cursorStats.line}, Col {cursorStats.col}
             {cursorStats.selectedChars > 0 && ` (${cursorStats.selectedChars} selected)`}
           </span>
         )}
 
-        {vimMode && (
+        {vimMode && mode !== "preview" && (
           <span className="rounded-[var(--radius-xs)] border border-[var(--color-line)] px-1.5 py-px font-mono text-[9.5px] font-semibold text-[var(--color-accent)]">
             VIM
           </span>

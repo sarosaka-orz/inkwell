@@ -51,6 +51,7 @@ export function CommandPalette() {
   const activeTabId = useEditorStore((s) => s.activeTabId);
   const recentFiles = useEditorStore((s) => s.recentFiles);
   const outline = useEditorStore((s) => s.outline);
+  const editorMode = useEditorStore((s) => s.mode);
   const addToast = useEditorStore((s) => s.addToast);
 
   const [query, setQuery] = useState("");
@@ -69,19 +70,25 @@ export function CommandPalette() {
   const { mode, term } = modeFor(query);
 
   const commands = useMemo<PaletteEntry[]>(() => {
-    return buildCommands().map((command: AppCommand) => ({
-      id: `cmd-${command.id}`,
-      title: command.title,
-      subtitle: command.detail,
-      group: command.group,
-      icon: command.icon,
-      shortcut: command.shortcut ? formatShortcut(command.shortcut) : undefined,
-      active: command.active,
-      keywords: command.keywords,
-      run: command.run,
-    }));
+    return buildCommands()
+      // Formatting commands are meaningless while reading a preview.
+      .filter(
+        (command) =>
+          !(editorMode === "preview" && command.group === "Edit" && command.id !== "find"),
+      )
+      .map((command: AppCommand) => ({
+        id: `cmd-${command.id}`,
+        title: command.title,
+        subtitle: command.detail,
+        group: command.group,
+        icon: command.icon,
+        shortcut: command.shortcut ? formatShortcut(command.shortcut) : undefined,
+        active: command.active,
+        keywords: command.keywords,
+        run: command.run,
+      }));
     // Rebuild whenever the underlying view state changes.
-  }, [tabs, activeTabId, recentFiles, outline, query, closeOverlay]);
+  }, [tabs, activeTabId, recentFiles, outline, editorMode, query, closeOverlay]);
 
   const entries = useMemo<PaletteEntry[]>(() => {
     const list: { entry: PaletteEntry; score: number }[] = [];

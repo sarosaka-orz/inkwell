@@ -1,4 +1,4 @@
-import { Compartment, type Extension } from "@codemirror/state";
+import { Compartment, EditorState, type Extension } from "@codemirror/state";
 import {
   EditorView,
   keymap,
@@ -30,7 +30,7 @@ import { extractHeadings } from "../../utils/outline";
 import { writeFile } from "../../services/tauriBridge";
 import { formatInline, formatLinePrefix, insertLink } from "../../services/editorController";
 import { createTheme } from "./theme";
-import { markdownRenderPlugin, themeRefresh } from "./renderPlugin";
+import { markdownRenderPlugin, previewMode, themeRefresh } from "./renderPlugin";
 import { smartMarkdownKeymap } from "./smartKeys";
 
 export const modeCompartment = new Compartment();
@@ -89,9 +89,21 @@ const markdownHighlight = HighlightStyle.define([...liveHeadingRules, ...inlineR
 const sourceMarkdownHighlight = HighlightStyle.define([...sourceHeadingRules, ...inlineRules]);
 
 export function modeExtension(mode: EditorMode): Extension {
-  return mode === "source"
-    ? [lineNumbers(), syntaxHighlighting(sourceMarkdownHighlight)]
-    : [syntaxHighlighting(markdownHighlight), markdownRenderPlugin()];
+  if (mode === "source") {
+    return [lineNumbers(), syntaxHighlighting(sourceMarkdownHighlight)];
+  }
+
+  if (mode === "preview") {
+    return [
+      previewMode.of(true),
+      EditorState.readOnly.of(true),
+      EditorView.editable.of(false),
+      syntaxHighlighting(markdownHighlight),
+      markdownRenderPlugin(),
+    ];
+  }
+
+  return [syntaxHighlighting(markdownHighlight), markdownRenderPlugin()];
 }
 
 export function vimExtension(enabled: boolean): Extension {
@@ -113,7 +125,7 @@ export function currentCompartmentEffects() {
   const { mode, vimMode, settings } = useEditorStore.getState();
   return [
     modeCompartment.reconfigure(modeExtension(mode)),
-    vimCompartment.reconfigure(vimExtension(vimMode)),
+    vimCompartment.reconfigure(vimExtension(vimMode && mode !== "preview")),
     typographyCompartment.reconfigure(typographyExtension(settings)),
     // Cached tabs may still hold widgets rendered with the old palette.
     themeRefresh.of(null),
@@ -217,7 +229,7 @@ export function buildEditorExtensions(tabId: string): Extension[] {
     keymap.of(editorKeymap),
     createTheme(),
     modeCompartment.of(modeExtension(mode)),
-    vimCompartment.of(vimExtension(vimMode)),
+    vimCompartment.of(vimExtension(vimMode && mode !== "preview")),
     typographyCompartment.of(typographyExtension(settings)),
     EditorView.updateListener.of((update) => handleUpdate(tabId, update)),
   ];

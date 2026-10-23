@@ -85,6 +85,45 @@
   border-radius: 1px;
 }
 
+/* Smooth caret: glide between positions instead of jumping. */
+.cm-smooth-caret .cm-cursor {
+  transition:
+    left 90ms cubic-bezier(0.16, 1, 0.3, 1),
+    top 90ms cubic-bezier(0.16, 1, 0.3, 1),
+    height 90ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: left, top;
+}
+
+/* Suppress the slide when switching tabs or modes. */
+.cm-smooth-caret.cm-caret-no-anim .cm-cursor {
+  transition: none !important;
+}
+
+/* ── Read-only preview ─────────────────────────────────────────────── */
+
+.cm-preview-mode .cm-cursorLayer {
+  display: none;
+}
+
+.cm-preview-mode .cm-activeLine,
+.cm-preview-mode .cm-activeLineGutter {
+  background: transparent !important;
+}
+
+.cm-preview-mode .cm-content {
+  cursor: default;
+}
+
+.cm-preview-mode .mermaid-container button {
+  display: none;
+}
+
+.cm-preview-mode .cm-table-widget-wrap,
+.cm-preview-mode .cm-rendered-image-wrap,
+.cm-preview-mode .cm-math-block {
+  cursor: default;
+}
+
 .cm-typewriter-mode .cm-content {
   padding-top: 38vh !important;
   padding-bottom: 55vh !important;
@@ -242,6 +281,11 @@
 
 .cm-editor .cm-task-checkbox:hover {
   border-color: var(--color-accent);
+}
+
+.cm-editor .cm-task-checkbox:disabled {
+  cursor: default;
+  opacity: 0.85;
 }
 
 .cm-editor .cm-task-checkbox:checked {

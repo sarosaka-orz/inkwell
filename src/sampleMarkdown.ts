@@ -138,6 +138,7 @@ pub fn save_document(path: String, content: String) -> Result<(), String> {
 - \`Ctrl + P\` : Command Palette
 - \`Ctrl + Shift + F\` : Pin Formatting Dock
 - \`Ctrl + /\` : Toggle WYSIWYG / Source Code Mode
+- \`Ctrl + Shift + E\` : Toggle Read Mode
 - \`Ctrl + B\` : Toggle Bold
 - \`Ctrl + I\` : Toggle Italic
 - \`Ctrl + \\\` : Toggle Library

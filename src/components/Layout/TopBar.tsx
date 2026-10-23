@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import {
   AlignCenter,
+  BookOpen,
   CodeXml,
   Command,
   Copy,
@@ -10,6 +11,7 @@ import {
   Maximize2,
   MoreHorizontal,
   PanelLeft,
+  Pencil,
   Pin,
   Save,
   Search,
@@ -38,6 +40,7 @@ export function TopBar() {
 
   const toggleSidebar = useEditorStore((s) => s.toggleSidebar);
   const toggleSearch = useEditorStore((s) => s.toggleSearch);
+  const toggleReadMode = useEditorStore((s) => s.toggleReadMode);
   const openOverlay = useEditorStore((s) => s.openOverlay);
   const setMode = useEditorStore((s) => s.setMode);
   const updateSettings = useEditorStore((s) => s.updateSettings);
@@ -81,6 +84,17 @@ export function TopBar() {
 
       <div className="ml-1 flex shrink-0 items-center gap-0.5">
         <IconButton
+          label={
+            mode === "preview"
+              ? "Switch to write mode (Ctrl+Shift+E)"
+              : "Switch to read mode (Ctrl+Shift+E)"
+          }
+          icon={mode === "preview" ? <Pencil size={15} /> : <BookOpen size={15} />}
+          active={mode === "preview"}
+          onClick={toggleReadMode}
+        />
+
+        <IconButton
           label="Find in document (Ctrl+F)"
           icon={<Search size={15} />}
           active={searchOpen}
@@ -123,10 +137,17 @@ export function TopBar() {
         <MenuSeparator />
         <MenuLabel>View</MenuLabel>
         <MenuItem
-          label="Live preview"
-          icon={<Eye size={14} />}
+          label="Write mode"
+          icon={<Pencil size={14} />}
           checked={mode === "live"}
           onSelect={() => setMode("live")}
+        />
+        <MenuItem
+          label="Read mode"
+          shortcut={formatShortcut("Mod+Shift+E")}
+          icon={<BookOpen size={14} />}
+          checked={mode === "preview"}
+          onSelect={() => setMode("preview")}
         />
         <MenuItem
           label="Source mode"

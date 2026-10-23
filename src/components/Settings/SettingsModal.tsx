@@ -34,6 +34,7 @@ const SHORTCUTS: { group: string; items: { keys: string; label: string }[] }[] =
     items: [
       { keys: "Mod+F", label: "Find and replace" },
       { keys: "Mod+/", label: "Toggle source mode" },
+      { keys: "Mod+Shift+E", label: "Toggle read mode" },
       { keys: "Mod+\\", label: "Toggle library" },
       { keys: "Mod+,", label: "Settings" },
       { keys: "Mod+Shift+F", label: "Pin formatting tools" },
@@ -336,6 +337,12 @@ function EditorPanel() {
           onChange={(vimMode) => updateSettings({ vimMode })}
           label="Vim mode"
           description="Normal, insert, and visual modes in the editor."
+        />
+        <Switch
+          checked={settings.smoothCaret}
+          onChange={(smoothCaret) => updateSettings({ smoothCaret })}
+          label="Smooth caret"
+          description="Glide the caret between positions instead of jumping."
         />
       </div>
     </div>

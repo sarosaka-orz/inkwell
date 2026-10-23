@@ -35,7 +35,7 @@ export function jumpToPos(pos: number) {
  * Toggle inline formatting like **bold**, *italic*, `code`, ~~strikethrough~~, ==highlight==
  */
 export function formatInline(delimiter: string, placeholder: string = "text") {
-  if (!currentView) return;
+  if (!currentView || currentView.state.readOnly) return;
   const { state } = currentView;
   const sel = state.selection.main;
   const len = delimiter.length;
@@ -80,7 +80,7 @@ export function formatInline(delimiter: string, placeholder: string = "text") {
  * Apply block heading (#, ##, etc.) or prefix (> , - , 1. , - [ ] )
  */
 export function formatLinePrefix(prefix: string) {
-  if (!currentView) return;
+  if (!currentView || currentView.state.readOnly) return;
   const { state } = currentView;
   const line = state.doc.lineAt(state.selection.main.head);
   const text = line.text;
@@ -111,7 +111,7 @@ export function formatLinePrefix(prefix: string) {
  * Insert code block or math block
  */
 export function insertFencedBlock(lang: string = "", placeholder: string = "code here") {
-  if (!currentView) return;
+  if (!currentView || currentView.state.readOnly) return;
   const { state } = currentView;
   const sel = state.selection.main;
   const selectedText = sel.empty ? placeholder : state.sliceDoc(sel.from, sel.to);
@@ -128,7 +128,7 @@ export function insertFencedBlock(lang: string = "", placeholder: string = "code
  * Insert math block ($$)
  */
 export function insertMathBlock() {
-  if (!currentView) return;
+  if (!currentView || currentView.state.readOnly) return;
   const { state } = currentView;
   const sel = state.selection.main;
   const selectedText = sel.empty ? "f(x) = \\int_{-\\infty}^{\\infty} e^{-x^2} dx" : state.sliceDoc(sel.from, sel.to);
@@ -143,7 +143,7 @@ export function insertMathBlock() {
 
 /** Insert literal text at the cursor/selection. */
 export function insertText(text: string) {
-  if (!currentView) return;
+  if (!currentView || currentView.state.readOnly) return;
   const sel = currentView.state.selection.main;
   currentView.dispatch({
     changes: { from: sel.from, to: sel.to, insert: text },
@@ -156,7 +156,7 @@ export function insertText(text: string) {
  * Insert table
  */
 export function insertTable(rows: number = 3, cols: number = 3) {
-  if (!currentView) return;
+  if (!currentView || currentView.state.readOnly) return;
   const { state } = currentView;
   const sel = state.selection.main;
 
@@ -183,7 +183,7 @@ export function insertTable(rows: number = 3, cols: number = 3) {
  * Insert link [text](url)
  */
 export function insertLink(url: string = "https://", text: string = "link") {
-  if (!currentView) return;
+  if (!currentView || currentView.state.readOnly) return;
   const { state } = currentView;
   const sel = state.selection.main;
   const label = sel.empty ? text : state.sliceDoc(sel.from, sel.to);
@@ -200,7 +200,7 @@ export function insertLink(url: string = "https://", text: string = "link") {
  * Insert image ![alt](url)
  */
 export function insertImage(url: string = "https://via.placeholder.com/600x300", alt: string = "Image description") {
-  if (!currentView) return;
+  if (!currentView || currentView.state.readOnly) return;
   const { state } = currentView;
   const sel = state.selection.main;
   const insert = `\n![${alt}](${url})\n`;
@@ -253,7 +253,7 @@ export function searchPrevious() {
 }
 
 function applyReplacement(replacement: string): boolean {
-  if (!currentView) return false;
+  if (!currentView || currentView.state.readOnly) return false;
   const current = getSearchQuery(currentView.state);
   if (!current || !current.search) return false;
   currentView.dispatch({

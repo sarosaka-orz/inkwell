@@ -24,10 +24,12 @@ import { Button, EmptyState, Kbd } from "../ui";
 
 export function Editor() {
   const editorRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
   const viewRef = useRef<EditorView | null>(null);
   const statesRef = useRef(new Map<string, EditorState>());
   const scrollRef = useRef(new Map<string, number>());
   const currentTabIdRef = useRef<string | null>(null);
+  const caretTimerRef = useRef<number | null>(null);
 
   const activeTabId = useEditorStore((s) => s.activeTabId);
   const tabIds = useEditorStore((s) => s.tabs.map((tab) => tab.id).join("|"));
@@ -38,6 +40,17 @@ export function Editor() {
   const createNewFile = useEditorStore((s) => s.createNewFile);
 
   const hasActiveTab = useEditorStore((s) => Boolean(s.activeTabId));
+
+  // Don't slide the caret across the page when switching tabs or modes.
+  const suppressCaretAnimation = () => {
+    const wrapper = wrapperRef.current;
+    if (!wrapper) return;
+    wrapper.classList.add("cm-caret-no-anim");
+    if (caretTimerRef.current) window.clearTimeout(caretTimerRef.current);
+    caretTimerRef.current = window.setTimeout(() => {
+      wrapper.classList.remove("cm-caret-no-anim");
+    }, 140);
+  };
 
   // Mount the single EditorView and swap per-tab EditorStates on tab change.
   useEffect(() => {
@@ -109,6 +122,7 @@ export function Editor() {
 
     const scrollTop = scrollRef.current.get(tab.id) ?? 0;
     view.scrollDOM.scrollTop = scrollTop;
+    suppressCaretAnimation();
     view.focus();
   }, [activeTabId]);
 
@@ -128,10 +142,11 @@ export function Editor() {
   useEffect(() => {
     const view = viewRef.current;
     if (!view) return;
+    suppressCaretAnimation();
     view.dispatch({
       effects: [
         modeCompartment.reconfigure(modeExtension(mode)),
-        vimCompartment.reconfigure(vimExtension(vimMode)),
+        vimCompartment.reconfigure(vimExtension(vimMode && mode !== "preview")),
         typographyCompartment.reconfigure(typographyExtension(settings)),
         themeRefresh.of(null),
       ],
@@ -148,6 +163,7 @@ export function Editor() {
   useEffect(() => {
     return () => {
       clearAutoSave();
+      if (caretTimerRef.current) window.clearTimeout(caretTimerRef.current);
       viewRef.current?.destroy();
       viewRef.current = null;
       setGlobalEditorView(null);
@@ -194,12 +210,13 @@ export function Editor() {
       )}
 
       <div
-        ref={editorRef}
+        ref={wrapperRef}
         className={[
           "h-full min-h-0 flex-1 overflow-auto",
-          mode === "source" ? "cm-source-mode" : "cm-live-mode",
-          settings.typewriterMode ? "cm-typewriter-mode" : "",
-          settings.focusMode ? "cm-focus-mode" : "",
+          mode === "source" ? "cm-source-mode" : mode === "preview" ? "cm-preview-mode" : "cm-live-mode",
+          settings.smoothCaret ? "cm-smooth-caret" : "",
+          mode !== "preview" && settings.typewriterMode ? "cm-typewriter-mode" : "",
+          mode !== "preview" && settings.focusMode ? "cm-focus-mode" : "",
           settings.fullWidth ? "cm-full-width" : "",
         ]
           .filter(Boolean)
@@ -210,7 +227,9 @@ export function Editor() {
             "--editor-measure": settings.fullWidth ? "100%" : "68ch",
           } as CSSProperties
         }
-      />
+      >
+        <div ref={editorRef} className="h-full" />
+      </div>
     </div>
   );
 }

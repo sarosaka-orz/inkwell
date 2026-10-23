@@ -6,12 +6,20 @@ import {
   type ViewUpdate,
   WidgetType,
 } from "@codemirror/view";
-import { StateEffect, StateField, type EditorState } from "@codemirror/state";
+import { Facet, StateEffect, StateField, type EditorState } from "@codemirror/state";
 import katex from "katex";
 import mermaid from "mermaid";
 
 /** Dispatch this to force widgets (notably Mermaid) to re-render. */
 export const themeRefresh = StateEffect.define<null>();
+
+/**
+ * Read-only preview mode hides all syntax and never reveals source under the
+ * cursor. It is provided by the preview mode extension.
+ */
+export const previewMode = Facet.define<boolean, boolean>({
+  combine: (values) => values.some(Boolean),
+});
 
 function themeKey(): string {
   const root = document.documentElement;
@@ -42,6 +50,7 @@ class CheckboxWidget extends WidgetType {
   constructor(
     private checked: boolean,
     private charPos: number,
+    private readOnly = false,
   ) {
     super();
   }
@@ -52,30 +61,41 @@ class CheckboxWidget extends WidgetType {
     el.checked = this.checked;
     el.className = "cm-task-checkbox";
     el.style.cssText =
-      "accent-color:var(--color-accent);cursor:pointer;margin-right:6px;vertical-align:middle;width:15px;height:15px;";
+      "accent-color:var(--color-accent);margin-right:6px;vertical-align:middle;width:15px;height:15px;";
 
     el.addEventListener("mousedown", (e) => {
       e.stopPropagation();
     });
 
-    el.addEventListener("change", (e) => {
-      e.stopPropagation();
-      e.preventDefault();
-      const newChar = el.checked ? "x" : " ";
-      try {
-        view.dispatch({
-          changes: { from: this.charPos, to: this.charPos + 1, insert: newChar },
-        });
-      } catch {
-        // ignore if pos shifted
-      }
-    });
+    if (this.readOnly) {
+      el.disabled = true;
+      el.style.cursor = "default";
+      el.setAttribute("aria-label", this.checked ? "Completed task" : "Incomplete task");
+    } else {
+      el.style.cursor = "pointer";
+      el.addEventListener("change", (e) => {
+        e.stopPropagation();
+        e.preventDefault();
+        const newChar = el.checked ? "x" : " ";
+        try {
+          view.dispatch({
+            changes: { from: this.charPos, to: this.charPos + 1, insert: newChar },
+          });
+        } catch {
+          // ignore if pos shifted
+        }
+      });
+    }
 
     return el;
   }
 
   eq(other: CheckboxWidget) {
-    return this.checked === other.checked && this.charPos === other.charPos;
+    return (
+      this.checked === other.checked &&
+      this.charPos === other.charPos &&
+      this.readOnly === other.readOnly
+    );
   }
 
   ignoreEvent() {
@@ -532,12 +552,13 @@ function buildBlockDecorations(state: EditorState): DecorationSet {
   const doc = state.doc.toString();
   const blocks = getBlocks(doc);
   const sel = state.selection.main;
+  const preview = state.facet(previewMode);
   const decoList: { from: number; to: number; deco: Decoration }[] = [];
   const key = themeKey();
   const dark = isDarkTheme();
 
   for (const block of blocks) {
-    if (cursorIntersects(sel.from, sel.to, block.from, block.to)) continue;
+    if (!preview && cursorIntersects(sel.from, sel.to, block.from, block.to)) continue;
 
     if (block.type === "math") {
       pushDeco(
@@ -576,6 +597,7 @@ export function buildDecorations(view: EditorView): DecorationSet {
   const doc = view.state.doc.toString();
   const sel = view.state.selection.main;
   const cursorLine = view.state.doc.lineAt(sel.head);
+  const preview = view.state.facet(previewMode);
 
   const blocks = getBlocks(doc);
 
@@ -587,6 +609,12 @@ export function buildDecorations(view: EditorView): DecorationSet {
 
     if (firstLine.to + 1 < lastLine.from) {
       pushDeco(decoList, firstLine.to + 1, lastLine.from, Decoration.mark({ class: "cm-code-block" }));
+    }
+
+    // Preview hides the fence lines entirely; live mode keeps them editable.
+    if (preview && lastLine.number !== firstLine.number) {
+      pushDeco(decoList, firstLine.from, firstLine.to, Decoration.replace({}));
+      pushDeco(decoList, lastLine.from, lastLine.to, Decoration.replace({}));
     }
   }
 
@@ -612,8 +640,8 @@ export function buildDecorations(view: EditorView): DecorationSet {
           deco: Decoration.line({ attributes: { class: `cm-header-${level}` } }),
         });
 
-        // Conceal '#' markers ONLY when cursor is NOT on this line
-        if (!isCurrentLine) {
+        // Conceal '#' markers unless the cursor is editing this line.
+        if (preview || !isCurrentLine) {
           pushDeco(decoList, line.from, line.from + level + 1, Decoration.replace({}));
         }
       }
@@ -626,7 +654,7 @@ export function buildDecorations(view: EditorView): DecorationSet {
           to: line.from,
           deco: Decoration.line({ attributes: { class: "cm-quote" } }),
         });
-        if (!isCurrentLine) {
+        if (preview || !isCurrentLine) {
           pushDeco(decoList, line.from, line.from + quoteMatch[0].length, Decoration.replace({}));
         }
       }
@@ -640,32 +668,37 @@ export function buildDecorations(view: EditorView): DecorationSet {
         const checked = taskMatch[2].toLowerCase() === "x";
         const charPos = checkStart + 1; // position of ' ' or 'x'
 
+        // Hide the list bullet that precedes the checkbox.
+        if (preview || !isCurrentLine) {
+          pushDeco(decoList, line.from, line.from + taskMatch[1].length, Decoration.replace({}));
+        }
+
         // Checkbox widget is always rendered for fast toggling
         pushDeco(
           decoList,
           checkStart,
           checkEnd + 1,
           Decoration.replace({
-            widget: new CheckboxWidget(checked, charPos),
+            widget: new CheckboxWidget(checked, charPos, preview),
           }),
         );
       } else {
         // Bullet list marker (- / * / +)
         const bulletMatch = text.match(/^(\s*)([-*+])\s/);
-        if (bulletMatch && !isCurrentLine) {
+        if (bulletMatch && (preview || !isCurrentLine)) {
           pushDeco(decoList, line.from, line.from + bulletMatch[0].length, Decoration.replace({}));
         }
 
         // Ordered list marker (1. / 2.)
         const olMatch = text.match(/^(\s*)(\d+[.)])\s/);
-        if (olMatch && !isCurrentLine) {
+        if (olMatch && (preview || !isCurrentLine)) {
           pushDeco(decoList, line.from, line.from + olMatch[0].length, Decoration.replace({}));
         }
       }
 
       // Horizontal rule: --- or *** or ___
       if (text.match(/^(\s*)([-*_])\2{2,}\s*$/)) {
-        if (!isCurrentLine) {
+        if (preview || !isCurrentLine) {
           pushDeco(
             decoList,
             line.from,
@@ -687,7 +720,7 @@ export function buildDecorations(view: EditorView): DecorationSet {
     if (m.index !== undefined && !isInsideBlock(blocks, m.index)) {
       const matchFrom = m.index;
       const matchTo = matchFrom + m[0].length;
-      if (!cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
+      if (preview || !cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
         pushDeco(
           decoList,
           matchFrom,
@@ -708,7 +741,7 @@ export function buildDecorations(view: EditorView): DecorationSet {
       const textEnd = textStart + m[1].length;
       const linkEnd = linkStart + m[0].length;
 
-      if (!cursorIntersects(sel.from, sel.to, linkStart, linkEnd)) {
+      if (preview || !cursorIntersects(sel.from, sel.to, linkStart, linkEnd)) {
         pushDeco(decoList, linkStart, textStart, Decoration.replace({}));
         pushDeco(decoList, textStart, textEnd, Decoration.mark({ class: "cm-link-text" }));
         pushDeco(decoList, textEnd, linkEnd, Decoration.replace({}));
@@ -721,7 +754,7 @@ export function buildDecorations(view: EditorView): DecorationSet {
     if (m.index !== undefined && !isInsideBlock(blocks, m.index)) {
       const matchFrom = m.index;
       const matchTo = matchFrom + m[0].length;
-      if (!cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
+      if (preview || !cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
         pushDeco(decoList, matchFrom, matchFrom + 2, Decoration.replace({}));
         pushDeco(decoList, matchFrom + 2, matchTo - 2, Decoration.mark({ class: "cm-highlight" }));
         pushDeco(decoList, matchTo - 2, matchTo, Decoration.replace({}));
@@ -734,7 +767,7 @@ export function buildDecorations(view: EditorView): DecorationSet {
     if (m.index !== undefined && !isInsideBlock(blocks, m.index)) {
       const matchFrom = m.index;
       const matchTo = matchFrom + m[0].length;
-      if (!cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
+      if (preview || !cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
         pushDeco(decoList, matchFrom, matchFrom + 2, Decoration.replace({}));
         pushDeco(decoList, matchFrom + 2, matchTo - 2, Decoration.mark({ class: "cm-strong" }));
         pushDeco(decoList, matchTo - 2, matchTo, Decoration.replace({}));
@@ -747,7 +780,7 @@ export function buildDecorations(view: EditorView): DecorationSet {
     if (m.index !== undefined && !isInsideBlock(blocks, m.index)) {
       const matchFrom = m.index;
       const matchTo = matchFrom + m[0].length;
-      if (!cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
+      if (preview || !cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
         pushDeco(decoList, matchFrom, matchFrom + 1, Decoration.replace({}));
         pushDeco(decoList, matchFrom + 1, matchTo - 1, Decoration.mark({ class: "cm-emphasis" }));
         pushDeco(decoList, matchTo - 1, matchTo, Decoration.replace({}));
@@ -760,7 +793,7 @@ export function buildDecorations(view: EditorView): DecorationSet {
     if (m.index !== undefined && !isInsideBlock(blocks, m.index)) {
       const matchFrom = m.index;
       const matchTo = matchFrom + m[0].length;
-      if (!cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
+      if (preview || !cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
         pushDeco(decoList, matchFrom, matchFrom + 2, Decoration.replace({}));
         pushDeco(decoList, matchFrom + 2, matchTo - 2, Decoration.mark({ class: "cm-strikethrough" }));
         pushDeco(decoList, matchTo - 2, matchTo, Decoration.replace({}));
@@ -773,7 +806,7 @@ export function buildDecorations(view: EditorView): DecorationSet {
     if (m.index !== undefined && !isInsideBlock(blocks, m.index)) {
       const matchFrom = m.index;
       const matchTo = matchFrom + m[0].length;
-      if (!cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
+      if (preview || !cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
         pushDeco(decoList, matchFrom, matchFrom + 1, Decoration.replace({}));
         pushDeco(decoList, matchFrom + 1, matchTo - 1, Decoration.mark({ class: "cm-inline-code" }));
         pushDeco(decoList, matchTo - 1, matchTo, Decoration.replace({}));
@@ -786,7 +819,7 @@ export function buildDecorations(view: EditorView): DecorationSet {
     if (m.index !== undefined && !isInsideBlock(blocks, m.index)) {
       const matchFrom = m.index;
       const matchTo = matchFrom + m[0].length;
-      if (!cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
+      if (preview || !cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
         pushDeco(
           decoList,
           matchFrom,
@@ -804,7 +837,7 @@ export function buildDecorations(view: EditorView): DecorationSet {
     if (m.index !== undefined && !isInsideBlock(blocks, m.index)) {
       const matchFrom = m.index;
       const matchTo = matchFrom + m[0].length;
-      if (!cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
+      if (preview || !cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
         pushDeco(decoList, matchFrom, matchTo, Decoration.mark({ class: "cm-footnote-ref" }));
       }
     }

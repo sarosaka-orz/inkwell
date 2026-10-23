@@ -15,6 +15,7 @@ import { Button, IconButton } from "../ui";
 export function FindReplace() {
   const searchOpen = useEditorStore((s) => s.searchOpen);
   const setSearchOpen = useEditorStore((s) => s.setSearchOpen);
+  const preview = useEditorStore((s) => s.mode === "preview");
 
   const [query, setQuery] = useState("");
   const [replaceText, setReplaceText] = useState("");
@@ -112,13 +113,15 @@ export function FindReplace() {
         />
         <IconButton label="Previous match" size="sm" icon={<ChevronUp size={14} />} onClick={searchPrevious} />
         <IconButton label="Next match" size="sm" icon={<ChevronDown size={14} />} onClick={searchNext} />
-        <IconButton
-          label="Toggle replace"
-          size="sm"
-          active={showReplace}
-          icon={<Replace size={14} />}
-          onClick={() => setShowReplace((value) => !value)}
-        />
+        {!preview && (
+          <IconButton
+            label="Toggle replace"
+            size="sm"
+            active={showReplace}
+            icon={<Replace size={14} />}
+            onClick={() => setShowReplace((value) => !value)}
+          />
+        )}
         <IconButton
           label="Close search"
           size="sm"
@@ -127,7 +130,7 @@ export function FindReplace() {
         />
       </div>
 
-      {showReplace && (
+      {showReplace && !preview && (
         <div className="flex items-center gap-1.5 border-t border-[var(--color-line-soft)] pt-1.5">
           <div className="input-shell flex min-w-0 flex-1 items-center gap-2 rounded-[var(--radius-xs)] border border-transparent bg-[var(--color-sunken)] px-2 py-1.5">
             <Replace size={12} className="shrink-0 text-[var(--color-ink-muted)]" />

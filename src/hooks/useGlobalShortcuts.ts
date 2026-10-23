@@ -26,6 +26,9 @@ export function useGlobalShortcuts() {
         if (code === "KeyF") {
           handled();
           store.toggleFormatBarPinned();
+        } else if (code === "KeyE") {
+          handled();
+          store.toggleReadMode();
         }
         return;
       }
