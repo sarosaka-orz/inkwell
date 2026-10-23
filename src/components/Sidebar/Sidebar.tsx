@@ -1,221 +1,139 @@
-import { useEffect, useState } from "react";
-import { FolderOpen, File, ChevronRight, ChevronDown, RefreshCw } from "lucide-react";
+import { useState } from "react";
+import { FolderOpen, RefreshCw, Search, X } from "lucide-react";
 import { useEditorStore } from "../../store/editorStore";
-import { invoke } from "@tauri-apps/api/core";
-import { open } from "@tauri-apps/plugin-dialog";
-
-interface FileEntry {
-  name: string;
-  path: string;
-  is_dir: boolean;
-}
-
-function FileTreeItem({ entry, depth = 0 }: { entry: FileEntry; depth?: number }) {
-  const [expanded, setExpanded] = useState(false);
-  const [children, setChildren] = useState<FileEntry[]>([]);
-  const { openFile, addToast, tabs, activeTabId } = useEditorStore();
-
-  const isActive = tabs.find((t) => t.id === activeTabId)?.path === entry.path;
-
-  const handleClick = async () => {
-    if (entry.is_dir) {
-      if (!expanded) {
-        try {
-          const entries = await invoke<FileEntry[]>("read_directory", { path: entry.path });
-          setChildren(entries);
-        } catch (e) {
-          addToast(`Failed to read directory: ${e}`, "error");
-        }
-      }
-      setExpanded(!expanded);
-    } else {
-      try {
-        const content = await invoke<string>("read_file", { path: entry.path });
-        openFile(entry.path, entry.name, content);
-        await invoke("add_recent_file", { path: entry.path, name: entry.name });
-      } catch (e) {
-        addToast(`Failed to open file: ${e}`, "error");
-      }
-    }
-  };
-
-  const getFileIcon = (name: string) => {
-    if (name.endsWith(".md") || name.endsWith(".markdown")) return "📝";
-    if (name.endsWith(".ts") || name.endsWith(".tsx")) return "🔷";
-    if (name.endsWith(".js") || name.endsWith(".jsx")) return "🟡";
-    if (name.endsWith(".json")) return "📋";
-    if (name.endsWith(".css") || name.endsWith(".scss")) return "🎨";
-    if (name.endsWith(".html")) return "🌐";
-    if (name.endsWith(".rs")) return "🦀";
-    if (name.endsWith(".toml")) return "⚙️";
-    return "📄";
-  };
-
-  return (
-    <div>
-      <button
-        onClick={handleClick}
-        className="w-full flex items-center gap-1.5 px-2 py-1 text-sm rounded-md transition-all duration-150"
-        style={{
-          paddingLeft: `${depth * 14 + 8}px`,
-          color: isActive ? "var(--color-accent)" : "var(--color-text-secondary)",
-          background: isActive ? "rgba(212, 165, 116, 0.08)" : "transparent",
-        }}
-        onMouseEnter={(e) => {
-          if (!isActive) e.currentTarget.style.background = "var(--color-bg-hover)";
-        }}
-        onMouseLeave={(e) => {
-          if (!isActive) e.currentTarget.style.background = "transparent";
-        }}
-      >
-        {entry.is_dir ? (
-          expanded ? (
-            <ChevronDown size={14} className="shrink-0" style={{ color: "var(--color-text-muted)" }} />
-          ) : (
-            <ChevronRight size={14} className="shrink-0" style={{ color: "var(--color-text-muted)" }} />
-          )
-        ) : (
-          <span className="w-3.5 shrink-0" />
-        )}
-        {entry.is_dir ? (
-          <FolderOpen size={14} className="shrink-0" style={{ color: "var(--color-accent)", opacity: 0.8 }} />
-        ) : (
-          <span className="text-xs shrink-0">{getFileIcon(entry.name)}</span>
-        )}
-        <span className="truncate text-[13px]">{entry.name}</span>
-      </button>
-      {expanded && children.length > 0 && (
-        <div className="ml-1">
-          {children.map((child) => (
-            <FileTreeItem key={child.path} entry={child} depth={depth + 1} />
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
+import { loadWorkspaceFolder, openWorkspaceFolder } from "../../services/documentActions";
+import { Button, Drawer, IconButton, SegmentedControl } from "../ui";
+import { FileTree } from "./FileTree";
+import { RecentList } from "./RecentList";
+import { OutlineView } from "./OutlineView";
 
 export function Sidebar() {
-  const { currentFolder, setCurrentFolder, addToast } = useEditorStore();
-  const [entries, setEntries] = useState<FileEntry[]>([]);
-  const [loading, setLoading] = useState(false);
+  const overlay = useEditorStore((s) => s.overlay);
+  const closeOverlay = useEditorStore((s) => s.closeOverlay);
+  const sidebarTab = useEditorStore((s) => s.sidebarTab);
+  const setSidebarTab = useEditorStore((s) => s.setSidebarTab);
+  const currentFolder = useEditorStore((s) => s.currentFolder);
+  const folderEntries = useEditorStore((s) => s.folderEntries);
+  const folderLoading = useEditorStore((s) => s.folderLoading);
 
-  const openFolder = async () => {
-    try {
-      const selected = await open({ directory: true });
-      if (selected) {
-        setCurrentFolder(selected as string);
-      }
-    } catch (e) {
-      addToast(`Failed to open folder: ${e}`, "error");
-    }
-  };
+  const [filter, setFilter] = useState("");
+  const open = overlay === "sidebar";
 
-  const refresh = async () => {
-    if (!currentFolder) return;
-    setLoading(true);
-    try {
-      const entries = await invoke<FileEntry[]>("read_directory", { path: currentFolder });
-      setEntries(entries);
-    } catch (e) {
-      addToast(`Failed to refresh: ${e}`, "error");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const query = filter.trim().toLowerCase();
+  const filteredEntries = query
+    ? folderEntries.filter((entry) => entry.name.toLowerCase().includes(query))
+    : folderEntries;
 
-  useEffect(() => {
-    if (!currentFolder) return;
-    setLoading(true);
-    invoke<FileEntry[]>("read_directory", { path: currentFolder })
-      .then(setEntries)
-      .catch((e) => addToast(`Failed to read directory: ${e}`, "error"))
-      .finally(() => setLoading(false));
-  }, [currentFolder]);
-
-  const folderName = currentFolder?.split("/").pop() || currentFolder?.split("\\").pop() || "";
+  const folderName = currentFolder?.split(/[\\/]/).filter(Boolean).pop() ?? currentFolder;
 
   return (
-    <div
-      className="flex flex-col overflow-hidden border-r shrink-0"
-      style={{ width: 288, background: "var(--color-bg-secondary)", borderColor: "var(--color-border)" }}
-    >
-      {/* Header */}
-      <div
-        className="flex items-center justify-between border-b shrink-0"
-        style={{ padding: "12px 16px", borderColor: "var(--color-border)" }}
-      >
-        <span
-          className="text-[11px] font-semibold uppercase tracking-wider"
-          style={{ color: "var(--color-text-muted)" }}
-        >
-          Explorer
+    <Drawer open={open} onClose={closeOverlay} label="Library">
+      <header className="flex h-[var(--topbar-h)] shrink-0 items-center justify-between border-b border-[var(--color-line)] px-3">
+        <span className="font-document text-[15px] font-semibold tracking-[-0.01em] text-[var(--color-ink)]">
+          Library
         </span>
-        <div className="flex items-center gap-1">
-          <button
-            onClick={refresh}
-            className="p-1 rounded-md hover:bg-[var(--color-bg-hover)] transition-colors"
-            title="Refresh"
-            style={{ color: "var(--color-text-muted)" }}
-          >
-            <RefreshCw size={12} className={loading ? "animate-spin" : ""} />
-          </button>
-          <button
-            onClick={openFolder}
-            className="p-1 rounded-md hover:bg-[var(--color-bg-hover)] transition-colors"
-            title="Open Folder"
-            style={{ color: "var(--color-text-muted)" }}
-          >
-            <FolderOpen size={14} />
-          </button>
+        <div className="flex items-center gap-0.5">
+          {sidebarTab === "files" && (
+            <>
+              <IconButton
+                label="Open folder"
+                size="sm"
+                icon={<FolderOpen size={14} />}
+                onClick={() => void openWorkspaceFolder()}
+              />
+              {currentFolder && (
+                <IconButton
+                  label="Refresh folder"
+                  size="sm"
+                  icon={<RefreshCw size={13} className={folderLoading ? "animate-spin" : ""} />}
+                  onClick={() => void loadWorkspaceFolder(currentFolder)}
+                />
+              )}
+            </>
+          )}
+          <IconButton label="Close library" size="sm" icon={<X size={14} />} onClick={closeOverlay} />
         </div>
-      </div>
+      </header>
 
-      {/* Folder name */}
-      {currentFolder && (
-        <div
-          className="px-3 py-1.5 border-b text-[12px] font-medium truncate"
-          style={{ borderColor: "var(--color-border)", color: "var(--color-text-secondary)" }}
-        >
-          {folderName}
-        </div>
-      )}
+      <div className="shrink-0 space-y-2 border-b border-[var(--color-line)] px-3 py-2.5">
+        <SegmentedControl
+          label="Library view"
+          value={sidebarTab}
+          onChange={setSidebarTab}
+          fill
+          className="w-full"
+          options={[
+            { value: "files", label: "Files" },
+            { value: "outline", label: "Outline" },
+            { value: "recent", label: "Recent" },
+          ]}
+        />
 
-      {/* File tree */}
-      <div className="flex-1 overflow-auto" style={{ padding: "8px" }}>
-        {currentFolder ? (
-          entries.length > 0 ? (
-            entries.map((entry) => <FileTreeItem key={entry.path} entry={entry} />)
-          ) : (
-            <div className="px-3 py-4 text-center" style={{ color: "var(--color-text-muted)" }}>
-              <p className="text-xs">Empty folder</p>
-            </div>
-          )
-        ) : (
-          <div className="px-3 py-8 text-center empty-state">
-            <FolderOpen
-              size={32}
-              className="mx-auto mb-3 opacity-20"
-              style={{ color: "var(--color-text-muted)" }}
+        {(sidebarTab === "files" || sidebarTab === "recent") && (
+          <div className="input-shell flex items-center gap-1.5 rounded-[var(--radius-sm)] border border-[var(--color-line)] bg-[var(--color-sunken)] px-2 py-1">
+            <Search size={11} className="shrink-0 text-[var(--color-ink-muted)]" />
+            <input
+              data-autofocus
+              value={filter}
+              onChange={(event) => setFilter(event.target.value)}
+              placeholder={sidebarTab === "files" ? "Filter files…" : "Filter recents…"}
+              className="w-full bg-transparent text-[11px] text-[var(--color-ink)] outline-none placeholder:text-[var(--color-ink-muted)]"
             />
-            <p className="text-xs mb-3" style={{ color: "var(--color-text-muted)" }}>
-              No folder open
-            </p>
-            <button
-              onClick={openFolder}
-              className="text-xs px-4 py-1.5 rounded-md transition-all duration-150 hover:bg-[var(--color-bg-hover)]"
-              style={{
-                background: "var(--color-bg-tertiary)",
-                color: "var(--color-text-primary)",
-                fontWeight: 600,
-                border: "1px solid var(--color-border)",
-              }}
-            >
-              Open Folder
-            </button>
+            {filter && (
+              <button
+                type="button"
+                aria-label="Clear filter"
+                onClick={() => setFilter("")}
+                className="text-[var(--color-ink-muted)] hover:text-[var(--color-ink)]"
+              >
+                <X size={11} />
+              </button>
+            )}
+          </div>
+        )}
+
+        {sidebarTab === "files" && currentFolder && (
+          <div className="flex items-center gap-1.5 px-1 text-[11px] font-medium text-[var(--color-ink-soft)]">
+            <FolderOpen size={12} className="shrink-0 text-[var(--color-accent)]" />
+            <span className="truncate">{folderName}</span>
           </div>
         )}
       </div>
-    </div>
+
+      <div className="min-h-0 flex-1 overflow-y-auto p-2">
+        {sidebarTab === "outline" && <OutlineView />}
+
+        {sidebarTab === "recent" && <RecentList filter={filter} />}
+
+        {sidebarTab === "files" &&
+          (currentFolder ? (
+            filteredEntries.length === 0 ? (
+              <div className="px-4 py-8 text-center text-[11px] text-[var(--color-ink-muted)]">
+                {query ? "No matching files" : "This folder is empty"}
+              </div>
+            ) : (
+              <FileTree entries={filteredEntries} />
+            )
+          ) : (
+            <div className="flex flex-col items-center gap-3 px-6 py-12 text-center">
+              <FolderOpen size={20} className="text-[var(--color-ink-muted)]" />
+              <div>
+                <p className="text-[12px] text-[var(--color-ink-soft)]">No folder open</p>
+                <p className="mt-1 max-w-[26ch] text-[11px] leading-relaxed text-[var(--color-ink-muted)]">
+                  Open a folder to browse and switch between your notes.
+                </p>
+              </div>
+              <Button
+                variant="secondary"
+                size="sm"
+                icon={<FolderOpen size={13} />}
+                onClick={() => void openWorkspaceFolder()}
+              >
+                Open folder
+              </Button>
+            </div>
+          ))}
+      </div>
+    </Drawer>
   );
 }

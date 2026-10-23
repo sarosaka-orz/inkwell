@@ -129,30 +129,7 @@ pub fn export_pdf(app: tauri::AppHandle, html: String, output_path: String) -> R
             std::thread::sleep(std::time::Duration::from_millis(600));
 
             // Use webkit2gtk's PrintOperation for native "Save as PDF" on Linux
-            #[cfg(target_os = "linux")]
-            {
-                use webkit2gtk::{WebViewExt, PrintOperationExt};
-                let wk_webview = webview.inner();
-                wk_webview.load_html(&encoded, None);
-                std::thread::sleep(std::time::Duration::from_millis(500));
-
-                let print_op = webkit2gtk::PrintOperation::new(&wk_webview);
-
-                // Configure print settings for PDF output
-                let settings = gtk::PrintSettings::new();
-                settings.set(&*gtk::PRINT_SETTINGS_OUTPUT_URI, Some(&format!("file://{}", output_path)));
-                settings.set(&*gtk::PRINT_SETTINGS_OUTPUT_FILE_FORMAT, Some("pdf"));
-                print_op.set_print_settings(&settings);
-
-                // Run the print operation (saves directly to the file)
-                print_op.print();
-            }
-
-            // On non-Linux platforms, fall back to system print dialog
-            #[cfg(not(target_os = "linux"))]
-            {
-                let _ = webview.print();
-            }
+            let _ = webview.print();
         })
         .map_err(|e| format!("with_webview failed: {}", e))?;
 
