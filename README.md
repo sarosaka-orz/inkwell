@@ -9,7 +9,7 @@ Inkwell is a cross-platform desktop application that renders Markdown seamlessly
 ## Features
 
 ### ✍️ True WYSIWYG & Live Preview Editing
-- **Intelligent Syntax Conceal/Reveal**: Markdown delimiters (`#`, `**`, `_`, `~~`, `==`, `[]()`) hide automatically for a clean reading view and reveal instantly when your cursor focuses on the token or line.
+- **Intelligent Syntax Conceal/Reveal**: Markdown delimiters (`#`, `**`, `_`, `~~`, `==`, `[]()`) and code fences hide automatically for a clean reading view and reveal instantly when your cursor focuses on the token or line.
 - **Three View Modes**: Write with **Live WYSIWYG**, read a clean, read-only **Preview**, or edit raw **Source Code** with line numbers and gutters (`Ctrl+/` source, `Ctrl+Shift+E` read).
 - **Smart Markdown Typing**: Automatic list continuation (`- `, `* `, `+ `, `1. `, `- [ ] `), empty item clearing on Enter, and Tab / Shift+Tab indentation.
 

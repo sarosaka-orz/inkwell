@@ -528,16 +528,34 @@ export function buildDecorations(view: EditorView): DecorationSet {
     const contentFrom = block.contentFrom ?? block.from;
     const contentTo = block.contentTo ?? block.to;
     const fenceLine = view.state.doc.lineAt(block.from);
+    const closingLine = block.closed
+      ? view.state.doc.lineAt(Math.max(block.from, block.to - 1))
+      : null;
+
+    let firstContentLine: { number: number; from: number } | null = null;
+    let lastContentLine: { number: number; from: number } | null = null;
 
     if (contentTo > contentFrom) {
-      const firstLine = view.state.doc.lineAt(contentFrom);
-      const lastLine = view.state.doc.lineAt(contentTo - 1);
+      firstContentLine = view.state.doc.lineAt(contentFrom);
+      lastContentLine = view.state.doc.lineAt(contentTo - 1);
+    } else {
+      // An empty block can still have one blank line between its fences.
+      const candidate = view.state.doc.lineAt(contentFrom);
+      if (
+        candidate.number > fenceLine.number &&
+        (!closingLine || candidate.number < closingLine.number)
+      ) {
+        firstContentLine = candidate;
+        lastContentLine = candidate;
+      }
+    }
 
-      for (let n = firstLine.number; n <= lastLine.number; n++) {
+    if (firstContentLine && lastContentLine) {
+      for (let n = firstContentLine.number; n <= lastContentLine.number; n++) {
         const line = view.state.doc.line(n);
         const classes = ["cm-code-block"];
-        if (n === firstLine.number) classes.push("cm-code-block-first");
-        if (n === lastLine.number) classes.push("cm-code-block-last");
+        if (n === firstContentLine.number) classes.push("cm-code-block-first");
+        if (n === lastContentLine.number) classes.push("cm-code-block-last");
         decoList.push({
           from: line.from,
           to: line.from,
@@ -546,13 +564,28 @@ export function buildDecorations(view: EditorView): DecorationSet {
       }
     }
 
-    // Preview hides the fence lines entirely; live mode keeps them editable.
-    if (preview && block.closed) {
-      const lastLine = view.state.doc.lineAt(Math.max(block.from, block.to - 1));
-      pushDeco(decoList, fenceLine.from, fenceLine.to, Decoration.replace({}));
-      if (lastLine.number !== fenceLine.number) {
-        pushDeco(decoList, lastLine.from, lastLine.to, Decoration.replace({}));
-      }
+    // A block with no content line at all (opening fence immediately followed
+    // by the closing fence) has nothing to click or show, so keep its fences.
+    if (!firstContentLine) continue;
+
+    // Hide the fences like the rest of the rendered Markdown. They come back
+    // as soon as the cursor/selection reaches the fence line itself, so the
+    // block stays editable without showing "```lang" above every example.
+    const fenceLines = [fenceLine];
+    if (closingLine && closingLine.number !== fenceLine.number) {
+      fenceLines.push(closingLine);
+    }
+
+    for (const line of fenceLines) {
+      const showFence = !preview && cursorIntersects(sel.from, sel.to, line.from, line.to);
+      if (showFence) continue;
+
+      pushDeco(decoList, line.from, line.to, Decoration.replace({}));
+      decoList.push({
+        from: line.from,
+        to: line.from,
+        deco: Decoration.line({ attributes: { class: "cm-code-fence-hidden" } }),
+      });
     }
   }
 

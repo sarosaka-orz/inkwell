@@ -66,6 +66,21 @@ describe("findBlocks fenced code", () => {
     const block = findBlocks(doc).find((item) => item.type === "mermaid");
     expect(block).toMatchObject({ closed: true, lang: "graph TD\nA-->B" });
   });
+
+  it("reports an empty block with one blank content line", () => {
+    const doc = "```js\n\n```";
+    const block = codeBlock(doc);
+    expect(block).toMatchObject({ closed: true });
+    expect(block!.contentFrom).toBe(6);
+    expect(block!.contentTo).toBe(6);
+  });
+
+  it("reports adjacent fences as an empty range", () => {
+    const doc = "```js\n```";
+    const block = codeBlock(doc);
+    expect(block).toMatchObject({ closed: true });
+    expect(block!.contentFrom).toBe(block!.contentTo);
+  });
 });
 
 describe("block ranges", () => {
