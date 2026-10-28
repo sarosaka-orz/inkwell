@@ -154,35 +154,40 @@ export async function showSaveFileDialog(defaultName: string = "untitled.md"): P
   return defaultName;
 }
 
-// Export PDF
-export async function exportPdfDoc(html: String, defaultName: string = "document.pdf"): Promise<void> {
-  if (isTauri()) {
-    try {
-      const { save } = await import("@tauri-apps/plugin-dialog");
-      const { invoke } = await import("@tauri-apps/api/core");
-      const outputPath = await save({
-        defaultPath: defaultName,
-        filters: [{ name: "PDF", extensions: ["pdf"] }],
-      });
-      if (!outputPath) return;
-      await invoke("export_pdf", { html, outputPath });
-      return;
-    } catch {
-      // Fallback to browser print if native webkit print is unavailable
-    }
+// Export PDF through the system print dialog (which offers "Save as PDF").
+// An off-screen iframe keeps the app window itself out of the print job.
+export async function exportPdfDoc(html: string, defaultName: string = "document.pdf"): Promise<void> {
+  const frame = document.createElement("iframe");
+  frame.title = defaultName;
+  frame.setAttribute("aria-hidden", "true");
+  Object.assign(frame.style, {
+    position: "fixed",
+    left: "-10000px",
+    top: "0",
+    width: "800px",
+    height: "1000px",
+    border: "0",
+  });
+  document.body.appendChild(frame);
+
+  const doc = frame.contentDocument;
+  if (!doc) {
+    frame.remove();
+    return;
   }
 
-  // Print fallback (opens clean print window)
-  const printWin = window.open("", "_blank");
-  if (printWin) {
-    printWin.document.write(html as string);
-    printWin.document.close();
-    printWin.focus();
-    setTimeout(() => {
-      printWin.print();
-    }, 400);
-  } else {
-    window.print();
+  doc.open();
+  doc.write(html);
+  doc.close();
+
+  // Let the renderer lay out fonts and diagrams before opening the dialog.
+  await new Promise((resolve) => window.setTimeout(resolve, 400));
+
+  try {
+    frame.contentWindow?.focus();
+    frame.contentWindow?.print();
+  } finally {
+    window.setTimeout(() => frame.remove(), 1000);
   }
 }
 
@@ -197,4 +202,36 @@ export function downloadFile(filename: string, content: string, mimeType: string
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+/** Only real web/mail links leave the app; relative paths stay in the draft. */
+export function normalizeExternalUrl(raw: string): string | null {
+  const trimmed = raw.trim();
+  if (!/^(https?:\/\/|mailto:)/i.test(trimmed)) return null;
+  try {
+    const parsed = new URL(trimmed);
+    return ["http:", "https:", "mailto:"].includes(parsed.protocol) ? parsed.href : null;
+  } catch {
+    return null;
+  }
+}
+
+export async function openExternalUrl(raw: string): Promise<void> {
+  const url = normalizeExternalUrl(raw);
+  if (!url) return;
+
+  if (isTauri()) {
+    const { invoke } = await import("@tauri-apps/api/core");
+    await invoke("open_url", { url });
+    return;
+  }
+
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+/** Close the desktop window without re-triggering the close guard. */
+export async function closeWindow(): Promise<void> {
+  if (!isTauri()) return;
+  const { getCurrentWindow } = await import("@tauri-apps/api/window");
+  await getCurrentWindow().destroy();
 }

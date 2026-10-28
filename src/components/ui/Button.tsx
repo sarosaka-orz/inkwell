@@ -1,4 +1,4 @@
-import type { ButtonHTMLAttributes, ReactNode } from "react";
+import { forwardRef, type ButtonHTMLAttributes, type ReactNode } from "react";
 import { cn } from "../../lib/cn";
 
 type Variant = "primary" | "secondary" | "ghost" | "danger";
@@ -19,16 +19,13 @@ const variants: Record<Variant, string> = {
   danger: "text-[var(--color-danger)] hover:bg-[var(--color-hover)]",
 };
 
-export function Button({
-  variant = "secondary",
-  size = "md",
-  icon,
-  className,
-  children,
-  ...rest
-}: ButtonProps) {
+export const Button = forwardRef<HTMLButtonElement, ButtonProps>(function Button(
+  { variant = "secondary", size = "md", icon, className, children, ...rest },
+  ref,
+) {
   return (
     <button
+      ref={ref}
       type="button"
       className={cn(
         "inline-flex items-center justify-center gap-1.5 rounded-[var(--radius-sm)] font-medium transition-colors disabled:pointer-events-none disabled:opacity-40",
@@ -42,4 +39,4 @@ export function Button({
       {children}
     </button>
   );
-}
+});

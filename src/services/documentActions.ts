@@ -26,8 +26,11 @@ function fileNameOf(path: string): string {
   return path.split("/").pop() || path.split("\\").pop() || "untitled.md";
 }
 
-export async function saveActiveDocument(options?: { forceDialog?: boolean }): Promise<boolean> {
-  const tab = getActiveTab();
+export async function saveDocument(
+  tabId: string,
+  options?: { forceDialog?: boolean },
+): Promise<boolean> {
+  const tab = useEditorStore.getState().tabs.find((item) => item.id === tabId);
   if (!tab) return false;
 
   const store = useEditorStore.getState();
@@ -54,6 +57,12 @@ export async function saveActiveDocument(options?: { forceDialog?: boolean }): P
     store.addToast(`Save failed: ${error}`, "error");
     return false;
   }
+}
+
+export async function saveActiveDocument(options?: { forceDialog?: boolean }): Promise<boolean> {
+  const tab = getActiveTab();
+  if (!tab) return false;
+  return saveDocument(tab.id, options);
 }
 
 export async function openDocument(): Promise<void> {

@@ -27,7 +27,7 @@ import { vim } from "@replit/codemirror-vim";
 import { useEditorStore, type EditorMode, type Settings } from "../../store/editorStore";
 import { resolveFontStack } from "../../themes/fonts";
 import { extractHeadings } from "../../utils/outline";
-import { writeFile } from "../../services/tauriBridge";
+import { openExternalUrl, writeFile } from "../../services/tauriBridge";
 import { formatInline, formatLinePrefix, insertLink } from "../../services/editorController";
 import { createTheme } from "./theme";
 import { markdownRenderPlugin, previewMode, themeRefresh } from "./renderPlugin";
@@ -209,6 +209,35 @@ const editorKeymap = [
   { key: "Mod-0", run: () => (formatLinePrefix(""), true) },
 ];
 
+// Plain click opens links while reading; in write mode the modifier keeps
+// clicks available for placing the cursor.
+const openLinksOnClick = EditorView.domEventHandlers({
+  mousedown(event, view) {
+    if (event.button !== 0) return false;
+
+    const target = event.target as HTMLElement | null;
+    const link = target?.closest(".cm-link-text");
+    if (!link) return false;
+
+    const preview = view.state.facet(previewMode);
+    if (!preview && !event.metaKey && !event.ctrlKey) return false;
+
+    const pos = view.posAtDOM(link);
+    const line = view.state.doc.lineAt(pos);
+    const offset = pos - line.from;
+
+    for (const match of line.text.matchAll(/(?<!!)\[([^\]]+)\]\(([^)]+)\)/g)) {
+      const start = match.index ?? 0;
+      if (offset >= start && offset <= start + match[0].length) {
+        event.preventDefault();
+        void openExternalUrl(match[2]);
+        return true;
+      }
+    }
+    return false;
+  },
+});
+
 export function buildEditorExtensions(tabId: string): Extension[] {
   const { mode, vimMode, settings } = useEditorStore.getState();
 
@@ -217,6 +246,7 @@ export function buildEditorExtensions(tabId: string): Extension[] {
     history(),
     drawSelection(),
     dropCursor(),
+    openLinksOnClick,
     indentOnInput(),
     bracketMatching(),
     foldGutter(),

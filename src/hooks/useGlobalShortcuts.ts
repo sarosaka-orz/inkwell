@@ -48,7 +48,7 @@ export function useGlobalShortcuts() {
           break;
         case "KeyW": {
           handled();
-          if (store.activeTabId) store.closeTab(store.activeTabId);
+          if (store.activeTabId) store.requestCloseTab(store.activeTabId);
           break;
         }
         case "KeyP":

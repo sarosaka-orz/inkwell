@@ -2,6 +2,7 @@ import { create } from "zustand";
 import type { Theme } from "../themes";
 import { applyTheme, getStoredTheme, THEME_STORAGE_KEY } from "../themes/applyTheme";
 import type { FileEntry } from "../services/tauriBridge";
+import { readDraft } from "../services/draftStore";
 import { SAMPLE_MARKDOWN } from "../sampleMarkdown";
 
 export interface Tab {
@@ -55,10 +56,19 @@ export interface CursorStats {
   selectedChars: number;
 }
 
+export interface PendingClose {
+  tabIds: string[];
+  /** True when the window itself is closing, not a single tab. */
+  closeWindow: boolean;
+}
+
 interface EditorState {
   // Tabs
   tabs: Tab[];
   activeTabId: string | null;
+  /** Number of crash-recovered tabs loaded at startup. */
+  recoveredDraftCount: number;
+  pendingClose: PendingClose | null;
 
   // View modes
   mode: EditorMode;
@@ -132,6 +142,10 @@ interface EditorState {
   openFile: (path: string, name: string, content: string) => void;
   createNewFile: () => void;
   closeTab: (id: string) => void;
+  closeTabs: (ids: string[]) => void;
+  requestCloseTab: (id: string) => void;
+  requestAppClose: () => boolean;
+  dismissPendingClose: () => void;
   setActiveTab: (id: string) => void;
   updateTabContent: (id: string, content: string) => void;
   markTabSaved: (id: string) => void;
@@ -200,9 +214,24 @@ const initialTab: Tab = {
   modified: false,
 };
 
+// Restore unsaved work before the first render. Drafts only contain dirty
+// tabs, so a clean shutdown never resurrects old documents.
+const recoveredDraft = readDraft();
+const recoveredTabs: Tab[] = (recoveredDraft?.tabs ?? []).map((tab) => ({
+  ...tab,
+  modified: true,
+}));
+const initialTabs = recoveredTabs.length > 0 ? recoveredTabs : [initialTab];
+const initialActiveTabId =
+  recoveredTabs.find((tab) => tab.id === recoveredDraft?.activeTabId)?.id ??
+  recoveredTabs[0]?.id ??
+  initialDocId;
+
 export const useEditorStore = create<EditorState>((set, get) => ({
-  tabs: [initialTab],
-  activeTabId: initialDocId,
+  tabs: initialTabs,
+  activeTabId: initialActiveTabId,
+  recoveredDraftCount: recoveredTabs.length,
+  pendingClose: null,
 
   mode: "live",
   setMode: (mode) => set({ mode }),
@@ -335,17 +364,62 @@ export const useEditorStore = create<EditorState>((set, get) => ({
     }));
   },
 
-  closeTab: (id) => {
+  closeTab: (id) => get().closeTabs([id]),
+
+  closeTabs: (ids) => {
+    const closing = new Set(ids);
     set((state) => {
-      const newTabs = state.tabs.filter((t) => t.id !== id);
+      const activeIndex = state.activeTabId
+        ? state.tabs.findIndex((tab) => tab.id === state.activeTabId)
+        : -1;
+      const newTabs = state.tabs.filter((tab) => !closing.has(tab.id));
+
       let newActiveId = state.activeTabId;
-      if (state.activeTabId === id) {
-        const idx = state.tabs.findIndex((t) => t.id === id);
-        newActiveId = newTabs.length > 0 ? newTabs[Math.min(idx, newTabs.length - 1)].id : null;
+      if (state.activeTabId && closing.has(state.activeTabId)) {
+        newActiveId = null;
+        // Prefer the next tab to the right, then the previous one.
+        for (let offset = 1; offset < state.tabs.length; offset++) {
+          const forward = state.tabs[activeIndex + offset];
+          if (forward && !closing.has(forward.id)) {
+            newActiveId = forward.id;
+            break;
+          }
+          const backward = state.tabs[activeIndex - offset];
+          if (backward && !closing.has(backward.id)) {
+            newActiveId = backward.id;
+            break;
+          }
+        }
       }
+
       return { tabs: newTabs, activeTabId: newActiveId };
     });
   },
+
+  requestCloseTab: (id) => {
+    const tab = get().tabs.find((item) => item.id === id);
+    if (!tab) return;
+    if (!tab.modified) {
+      get().closeTabs([id]);
+      return;
+    }
+    set({ pendingClose: { tabIds: [id], closeWindow: false } });
+  },
+
+  requestAppClose: () => {
+    if (get().pendingClose) return true;
+    const modified = get().tabs.filter((tab) => tab.modified);
+    if (modified.length === 0) return false;
+    set({
+      pendingClose: {
+        tabIds: modified.map((tab) => tab.id),
+        closeWindow: true,
+      },
+    });
+    return true;
+  },
+
+  dismissPendingClose: () => set({ pendingClose: null }),
 
   setActiveTab: (id) => set({ activeTabId: id }),
 

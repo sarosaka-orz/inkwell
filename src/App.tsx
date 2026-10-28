@@ -1,8 +1,10 @@
 import { useEffect } from "react";
 import { useEditorStore } from "./store/editorStore";
 import { applyTheme } from "./themes/applyTheme";
+import { useAppCloseGuard } from "./hooks/useAppCloseGuard";
 import { useGlobalShortcuts } from "./hooks/useGlobalShortcuts";
 import { getRecentFiles, isTauri, readFile } from "./services/tauriBridge";
+import { writeDrafts } from "./services/draftStore";
 import { TopBar } from "./components/Layout/TopBar";
 import { StatusBar } from "./components/Layout/StatusBar";
 import { Editor } from "./components/Editor/Editor";
@@ -11,15 +13,63 @@ import { Sidebar } from "./components/Sidebar/Sidebar";
 import { CommandPalette } from "./components/CommandPalette/CommandPalette";
 import { SettingsModal } from "./components/Settings/SettingsModal";
 import { InsertTableModal } from "./components/TableModal/InsertTableModal";
+import { CloseConfirmDialog } from "./components/Dialogs/CloseConfirmDialog";
 import { ToastContainer } from "./components/Toast/Toast";
 
 export default function App() {
   const theme = useEditorStore((s) => s.theme);
   const overlay = useEditorStore((s) => s.overlay);
   const mode = useEditorStore((s) => s.mode);
+  const pendingClose = useEditorStore((s) => s.pendingClose);
+  const recoveredDraftCount = useEditorStore((s) => s.recoveredDraftCount);
   const setRecentFiles = useEditorStore((s) => s.setRecentFiles);
 
   useGlobalShortcuts();
+  useAppCloseGuard();
+
+  // Persist only dirty tabs; the draft clears itself once everything is saved.
+  useEffect(() => {
+    let timer: number | undefined;
+
+    const persist = () => {
+      const state = useEditorStore.getState();
+      writeDrafts(state.tabs, state.activeTabId);
+    };
+
+    const unsubscribe = useEditorStore.subscribe((state, previous) => {
+      if (state.tabs === previous.tabs) return;
+      window.clearTimeout(timer);
+      timer = window.setTimeout(persist, 400);
+    });
+
+    const flush = () => {
+      window.clearTimeout(timer);
+      persist();
+    };
+
+    window.addEventListener("pagehide", flush);
+    window.addEventListener("beforeunload", flush);
+
+    return () => {
+      unsubscribe();
+      window.clearTimeout(timer);
+      window.removeEventListener("pagehide", flush);
+      window.removeEventListener("beforeunload", flush);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (recoveredDraftCount === 0) return;
+    const timer = window.setTimeout(() => {
+      useEditorStore
+        .getState()
+        .addToast(
+          `Recovered ${recoveredDraftCount} unsaved draft${recoveredDraftCount === 1 ? "" : "s"}`,
+          "info",
+        );
+    }, 600);
+    return () => window.clearTimeout(timer);
+  }, [recoveredDraftCount]);
 
   useEffect(() => {
     const root = document.documentElement;
@@ -39,7 +89,7 @@ export default function App() {
 
   // Load the generated example document on first launch in the desktop app.
   useEffect(() => {
-    if (!isTauri()) return;
+    if (!isTauri() || useEditorStore.getState().recoveredDraftCount > 0) return;
     let cancelled = false;
 
     import("@tauri-apps/api/core")
@@ -64,7 +114,7 @@ export default function App() {
       <div
         id="app-shell"
         className="flex min-h-0 flex-1 flex-col"
-        inert={overlay !== null}
+        inert={overlay !== null || pendingClose !== null}
       >
         <TopBar />
         <Editor />
@@ -75,6 +125,7 @@ export default function App() {
       {overlay === "command" && <CommandPalette />}
       {overlay === "settings" && <SettingsModal />}
       {overlay === "table" && <InsertTableModal />}
+      {pendingClose && <CloseConfirmDialog />}
       {overlay === null && mode !== "preview" && <FormattingDock />}
       <ToastContainer />
     </div>

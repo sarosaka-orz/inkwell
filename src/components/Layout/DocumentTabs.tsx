@@ -7,7 +7,7 @@ export function DocumentTabs() {
   const tabs = useEditorStore((s) => s.tabs);
   const activeTabId = useEditorStore((s) => s.activeTabId);
   const setActiveTab = useEditorStore((s) => s.setActiveTab);
-  const closeTab = useEditorStore((s) => s.closeTab);
+  const requestCloseTab = useEditorStore((s) => s.requestCloseTab);
   const createNewFile = useEditorStore((s) => s.createNewFile);
   const stripRef = useRef<HTMLDivElement>(null);
 
@@ -33,7 +33,7 @@ export function DocumentTabs() {
       move(-1);
     } else if (event.key === "Delete" || event.key === "Backspace") {
       event.preventDefault();
-      closeTab(id);
+      requestCloseTab(id);
     }
   };
 
@@ -57,7 +57,7 @@ export function DocumentTabs() {
             onClick={() => setActiveTab(tab.id)}
             onKeyDown={(event) => onTabKeyDown(event, tab.id)}
             onAuxClick={(event) => {
-              if (event.button === 1) closeTab(tab.id);
+              if (event.button === 1) requestCloseTab(tab.id);
             }}
             className={cn(
               "group relative flex h-full max-w-[190px] shrink-0 cursor-pointer items-center gap-1.5 px-3 text-[12px] outline-none transition-colors",
@@ -82,7 +82,7 @@ export function DocumentTabs() {
               title={`Close ${tab.name} (Ctrl+W)`}
               onClick={(event) => {
                 event.stopPropagation();
-                closeTab(tab.id);
+                requestCloseTab(tab.id);
               }}
               className={cn(
                 "ml-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded-[var(--radius-xs)] text-[var(--color-ink-muted)] transition-all hover:bg-[var(--color-hover)] hover:text-[var(--color-ink)]",
