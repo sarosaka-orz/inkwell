@@ -28,6 +28,40 @@ pub fn write_file(path: String, contents: String) -> Result<(), String> {
 }
 
 #[command]
+pub fn open_url(url: String) -> Result<(), String> {
+    let allowed = url.starts_with("http://")
+        || url.starts_with("https://")
+        || url.starts_with("mailto:");
+    if !allowed {
+        return Err("Unsupported URL scheme".to_string());
+    }
+
+    #[cfg(target_os = "linux")]
+    let result = std::process::Command::new("xdg-open").arg(&url).spawn();
+
+    #[cfg(target_os = "macos")]
+    let result = std::process::Command::new("open").arg(&url).spawn();
+
+    #[cfg(target_os = "windows")]
+    let result = std::process::Command::new("cmd")
+        .arg("/C")
+        .arg("start")
+        .arg("")
+        .arg(&url)
+        .spawn();
+
+    #[cfg(not(any(target_os = "linux", target_os = "macos", target_os = "windows")))]
+    let result: Result<std::process::Child, std::io::Error> = Err(std::io::Error::new(
+        std::io::ErrorKind::Unsupported,
+        "unsupported platform",
+    ));
+
+    result
+        .map(|_| ())
+        .map_err(|e| format!("Failed to open link: {}", e))
+}
+
+#[command]
 pub fn read_directory(path: String) -> Result<Vec<FileEntry>, String> {
     let dir = Path::new(&path);
     if !dir.is_dir() {
@@ -101,90 +135,6 @@ pub fn add_recent_file(path: String, name: String) -> Result<Vec<RecentFile>, St
     let json = serde_json::to_string_pretty(&files).map_err(|e| e.to_string())?;
     fs::write(recent_files_path(), json).map_err(|e| e.to_string())?;
     Ok(files)
-}
-
-#[command]
-pub fn export_pdf(app: tauri::AppHandle, html: String, output_path: String) -> Result<(), String> {
-    use tauri::WebviewUrl;
-    use tauri::WebviewWindowBuilder;
-
-    // Create a temporary hidden window with a webview for PDF generation
-    let temp_win = WebviewWindowBuilder::new(
-        &app,
-        "pdf-export-temp",
-        WebviewUrl::App("index.html".into()),
-    )
-    .title("Exporting PDF...")
-    .inner_size(800.0, 1000.0)
-    .visible(false)
-    .build()
-    .map_err(|e| format!("Failed to create temp webview: {}", e))?;
-
-    // Load the HTML content as a data URI
-    let encoded = format!("data:text/html;base64,{}", base64_encode(html.as_bytes()));
-
-    temp_win
-        .with_webview(move |webview| {
-            // Give the renderer time to lay out the page
-            std::thread::sleep(std::time::Duration::from_millis(600));
-
-            // Use webkit2gtk's PrintOperation for native "Save as PDF" on Linux
-            #[cfg(target_os = "linux")]
-            {
-                use webkit2gtk::{WebViewExt, PrintOperationExt};
-                let wk_webview = webview.inner();
-                wk_webview.load_html(&encoded, None);
-                std::thread::sleep(std::time::Duration::from_millis(500));
-
-                let print_op = webkit2gtk::PrintOperation::new(&wk_webview);
-
-                // Configure print settings for PDF output
-                let settings = gtk::PrintSettings::new();
-                settings.set(&*gtk::PRINT_SETTINGS_OUTPUT_URI, Some(&format!("file://{}", output_path)));
-                settings.set(&*gtk::PRINT_SETTINGS_OUTPUT_FILE_FORMAT, Some("pdf"));
-                print_op.set_print_settings(&settings);
-
-                // Run the print operation (saves directly to the file)
-                print_op.print();
-            }
-
-            // On non-Linux platforms, fall back to system print dialog
-            #[cfg(not(target_os = "linux"))]
-            {
-                let _ = webview.print();
-            }
-        })
-        .map_err(|e| format!("with_webview failed: {}", e))?;
-
-    // Wait for the print operation to complete, then close the temp window
-    std::thread::sleep(std::time::Duration::from_millis(500));
-    let _ = temp_win.close();
-
-    Ok(())
-}
-
-fn base64_encode(bytes: &[u8]) -> String {
-    const CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
-    let mut result = String::new();
-    for chunk in bytes.chunks(3) {
-        let b0 = chunk[0] as u32;
-        let b1 = if chunk.len() > 1 { chunk[1] as u32 } else { 0 };
-        let b2 = if chunk.len() > 2 { chunk[2] as u32 } else { 0 };
-        let triple = (b0 << 16) | (b1 << 8) | b2;
-        result.push(CHARS[((triple >> 18) & 0x3F) as usize] as char);
-        result.push(CHARS[((triple >> 12) & 0x3F) as usize] as char);
-        if chunk.len() > 1 {
-            result.push(CHARS[((triple >> 6) & 0x3F) as usize] as char);
-        } else {
-            result.push('=');
-        }
-        if chunk.len() > 2 {
-            result.push(CHARS[(triple & 0x3F) as usize] as char);
-        } else {
-            result.push('=');
-        }
-    }
-    result
 }
 
 #[command]

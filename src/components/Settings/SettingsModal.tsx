@@ -1,215 +1,379 @@
-import { useEditorStore, type Theme } from "../../store/editorStore";
+import type { CSSProperties } from "react";
+import { Keyboard, Palette, Sliders, Type } from "lucide-react";
+import {
+  useEditorStore,
+  type FontChoice,
+  type SettingsSection,
+} from "../../store/editorStore";
 import { themes } from "../../themes";
-import { X } from "lucide-react";
+import { FONT_OPTIONS, resolveFontStack } from "../../themes/fonts";
+import { formatShortcut } from "../../lib/platform";
+import { cn } from "../../lib/cn";
+import { Button, Field, Kbd, ModalShell, Switch } from "../ui";
+
+const SECTIONS: { id: SettingsSection; label: string; icon: typeof Palette }[] = [
+  { id: "appearance", label: "Appearance", icon: Palette },
+  { id: "typography", label: "Typography", icon: Type },
+  { id: "editor", label: "Editor", icon: Sliders },
+  { id: "shortcuts", label: "Shortcuts", icon: Keyboard },
+];
+
+const SHORTCUTS: { group: string; items: { keys: string; label: string }[] }[] = [
+  {
+    group: "File",
+    items: [
+      { keys: "Mod+N", label: "New document" },
+      { keys: "Mod+O", label: "Open document" },
+      { keys: "Mod+S", label: "Save" },
+      { keys: "Mod+W", label: "Close tab" },
+      { keys: "Mod+P", label: "Command palette" },
+    ],
+  },
+  {
+    group: "View",
+    items: [
+      { keys: "Mod+F", label: "Find and replace" },
+      { keys: "Mod+/", label: "Toggle source mode" },
+      { keys: "Mod+Shift+E", label: "Toggle read mode" },
+      { keys: "Mod+\\", label: "Toggle library" },
+      { keys: "Mod+,", label: "Settings" },
+      { keys: "Mod+Shift+F", label: "Pin formatting tools" },
+    ],
+  },
+  {
+    group: "Formatting",
+    items: [
+      { keys: "Mod+B", label: "Bold" },
+      { keys: "Mod+I", label: "Italic" },
+      { keys: "Mod+K", label: "Link" },
+      { keys: "Mod+1", label: "Heading 1" },
+      { keys: "Mod+Z", label: "Undo" },
+    ],
+  },
+];
 
 export function SettingsModal() {
-  const { settings, updateSettings, toggleSettings, theme, setTheme } = useEditorStore();
+  const closeOverlay = useEditorStore((s) => s.closeOverlay);
+  const section = useEditorStore((s) => s.settingsSection);
+  const setSection = useEditorStore((s) => s.setSettingsSection);
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.5)", backdropFilter: "blur(8px)" }}
-      onClick={(e) => {
-        if (e.target === e.currentTarget) toggleSettings();
-      }}
+    <ModalShell
+      title="Settings"
+      description="Tune the writing experience."
+      onClose={closeOverlay}
+      size="lg"
+      bodyClassName="flex min-h-0 flex-1 overflow-hidden p-0"
+      panelClassName="min-h-[440px]"
+      footer={
+        <Button variant="primary" onClick={closeOverlay}>
+          Done
+        </Button>
+      }
     >
-      <div
-        className="w-full max-w-xl rounded-xl shadow-2xl border overflow-hidden"
-        style={{
-          background: "var(--color-bg-secondary)",
-          borderColor: "var(--color-border)",
-          animation: "fade-in-up 0.25s cubic-bezier(0.16, 1, 0.3, 1)",
-        }}
+      <nav
+        aria-label="Settings sections"
+        className="flex w-44 shrink-0 flex-col gap-0.5 border-r border-[var(--color-line)] p-2"
       >
-        {/* Header */}
-        <div
-          className="flex items-center justify-between px-5 py-3 border-b"
-          style={{ borderColor: "var(--color-border)" }}
-        >
-          <h2 className="text-base font-semibold" style={{ color: "var(--color-text-primary)" }}>
-            Settings
-          </h2>
-          <button
-            onClick={toggleSettings}
-            className="p-1 rounded-md hover:bg-[var(--color-bg-hover)] transition-colors"
-            style={{ color: "var(--color-text-muted)" }}
-          >
-            <X size={16} />
-          </button>
-        </div>
-
-        {/* Body */}
-        <div className="p-6 space-y-6 max-h-[70vh] overflow-auto">
-          {/* Theme */}
-          <SettingGroup label="Theme">
-            <div className="grid grid-cols-3 gap-2">
-              {themes.map((t) => (
-                <button
-                  key={t.name}
-                  onClick={() => setTheme(t.name as Theme)}
-                  className="px-3 py-2 rounded-lg text-xs border transition-all duration-200"
-                  style={{
-                    background: theme === t.name ? "var(--color-accent)" : "var(--color-bg-tertiary)",
-                    borderColor: theme === t.name ? "var(--color-accent)" : "var(--color-border)",
-                    color: theme === t.name ? "#000" : "var(--color-text-secondary)",
-                    fontWeight: theme === t.name ? 600 : 400,
-                    transform: theme === t.name ? "scale(1.02)" : "scale(1)",
-                  }}
-                >
-                  {t.label}
-                </button>
-              ))}
-            </div>
-          </SettingGroup>
-
-          {/* Font Family */}
-          <SettingGroup label="Font Family">
-            <select
-              value={settings.fontFamily}
-              onChange={(e) => updateSettings({ fontFamily: e.target.value })}
-              className="w-full px-3 py-2 rounded-lg border text-sm cursor-pointer"
-              style={{
-                background: "var(--color-bg-tertiary)",
-                borderColor: "var(--color-border)",
-                color: "var(--color-text-primary)",
-              }}
+        {SECTIONS.map((item) => {
+          const Icon = item.icon;
+          const active = section === item.id;
+          return (
+            <button
+              key={item.id}
+              type="button"
+              aria-current={active ? "page" : undefined}
+              data-autofocus={active || undefined}
+              onClick={() => setSection(item.id)}
+              className={cn(
+                "flex items-center gap-2.5 rounded-[var(--radius-sm)] px-2.5 py-1.5 text-left text-[12px] transition-colors",
+                active
+                  ? "bg-[var(--color-active)] text-[var(--color-ink)]"
+                  : "text-[var(--color-ink-soft)] hover:bg-[var(--color-hover)] hover:text-[var(--color-ink)]",
+              )}
             >
-              <option value="JetBrains Mono">JetBrains Mono</option>
-              <option value="Fira Code">Fira Code</option>
-              <option value="Cascadia Code">Cascadia Code</option>
-              <option value="iA Writer Quattro">iA Writer Quattro</option>
-              <option value="Literata">Literata</option>
-              <option value="Georgia">Georgia</option>
-            </select>
-          </SettingGroup>
-
-          {/* Font Size */}
-          <SettingGroup label={`Font Size: ${settings.fontSize}px`}>
-            <div className="flex items-center gap-3">
-              <input
-                type="range"
-                min={12}
-                max={24}
-                value={settings.fontSize}
-                onChange={(e) => updateSettings({ fontSize: Number(e.target.value) })}
-                className="flex-1 accent-[var(--color-accent)]"
+              <Icon
+                size={14}
+                className={active ? "text-[var(--color-accent)]" : "text-[var(--color-ink-muted)]"}
               />
-              <span
-                className="text-xs w-8 text-right tabular-nums"
-                style={{ color: "var(--color-text-muted)" }}
+              {item.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      <div className="min-h-0 flex-1 overflow-y-auto px-6 py-5">
+        {section === "appearance" && <AppearancePanel />}
+        {section === "typography" && <TypographyPanel />}
+        {section === "editor" && <EditorPanel />}
+        {section === "shortcuts" && <ShortcutsPanel />}
+      </div>
+    </ModalShell>
+  );
+}
+
+function PanelHeading({ title, description }: { title: string; description: string }) {
+  return (
+    <div className="mb-5">
+      <h3 className="text-[13px] font-semibold text-[var(--color-ink)]">{title}</h3>
+      <p className="mt-1 text-[11px] leading-relaxed text-[var(--color-ink-muted)]">{description}</p>
+    </div>
+  );
+}
+
+function AppearancePanel() {
+  const theme = useEditorStore((s) => s.theme);
+  const setTheme = useEditorStore((s) => s.setTheme);
+
+  return (
+    <div>
+      <PanelHeading
+        title="Theme"
+        description="Palettes are made of ink, paper, and one accent color. They apply instantly."
+      />
+      <div className="grid grid-cols-2 gap-2.5">
+        {themes.map((item) => {
+          const active = theme === item.name;
+          return (
+            <button
+              key={item.name}
+              type="button"
+              onClick={() => setTheme(item.name)}
+              aria-pressed={active}
+              className={cn(
+                "rounded-[var(--radius-md)] border p-1.5 text-left transition-colors",
+                active
+                  ? "border-[var(--color-accent)]"
+                  : "border-[var(--color-line)] hover:border-[var(--color-ink-muted)]",
+              )}
+            >
+              <div
+                data-theme={item.name}
+                data-scheme={item.isDark ? "dark" : "light"}
+                className="rounded-[var(--radius-sm)] border border-[var(--color-line)] bg-[var(--color-canvas)] p-3"
               >
-                {settings.fontSize}
-              </span>
-            </div>
-          </SettingGroup>
-
-          {/* Line Height */}
-          <SettingGroup label={`Line Height: ${settings.lineHeight.toFixed(1)}`}>
-            <div className="flex items-center gap-3">
-              <input
-                type="range"
-                min={1.2}
-                max={2.5}
-                step={0.1}
-                value={settings.lineHeight}
-                onChange={(e) => updateSettings({ lineHeight: Number(e.target.value) })}
-                className="flex-1 accent-[var(--color-accent)]"
-              />
-              <span
-                className="text-xs w-8 text-right tabular-nums"
-                style={{ color: "var(--color-text-muted)" }}
-              >
-                {settings.lineHeight.toFixed(1)}
-              </span>
-            </div>
-          </SettingGroup>
-
-          {/* Toggles */}
-          <div className="grid grid-cols-2 gap-3">
-            <ToggleSetting
-              label="Vim Mode"
-              checked={settings.vimMode}
-              onChange={(v) => updateSettings({ vimMode: v })}
-            />
-            <ToggleSetting
-              label="Spell Check"
-              checked={settings.spellCheck}
-              onChange={(v) => updateSettings({ spellCheck: v })}
-            />
-          </div>
-        </div>
-
-        {/* Footer */}
-        <div
-          className="px-5 py-3 border-t text-right"
-          style={{ borderColor: "var(--color-border)" }}
-        >
-          <button
-            onClick={toggleSettings}
-            className="px-4 py-1.5 rounded-lg text-sm transition-all duration-150 hover:opacity-80"
-            style={{
-              background: "var(--color-accent)",
-              color: "var(--color-bg-primary)",
-              fontWeight: 600,
-            }}
-          >
-            Done
-          </button>
-        </div>
+                <div className="flex items-center gap-1.5">
+                  {["--color-paper", "--color-sunken", "--color-accent", "--color-ink"].map(
+                    (token) => (
+                      <span
+                        key={token}
+                        className="h-4 w-4 rounded-full border border-[var(--color-line)]"
+                        style={{ background: `var(${token})` }}
+                      />
+                    ),
+                  )}
+                  <span
+                    className="ml-auto font-document text-[13px] text-[var(--color-ink)]"
+                    style={{ lineHeight: 1 }}
+                  >
+                    Aa
+                  </span>
+                </div>
+              </div>
+              <div className="flex items-center justify-between px-1 pt-2 text-[11.5px]">
+                <span className="text-[var(--color-ink)]">{item.label}</span>
+                <span className="text-[10px] text-[var(--color-ink-muted)]">
+                  {item.isDark ? "Dark" : "Light"}
+                </span>
+              </div>
+            </button>
+          );
+        })}
       </div>
     </div>
   );
 }
 
-function SettingGroup({ label, children }: { label: string; children: React.ReactNode }) {
+function TypographyPanel() {
+  const settings = useEditorStore((s) => s.settings);
+  const updateSettings = useEditorStore((s) => s.updateSettings);
+
   return (
-    <div>
-      <label
-        className="block text-[13px] font-medium mb-2"
-        style={{ color: "var(--color-text-secondary)" }}
-      >
-        {label}
-      </label>
-      {children}
+    <div className="space-y-6">
+      <div>
+        <PanelHeading
+          title="Typography"
+          description="Document type is separate from the interface. Changes apply to the editor immediately."
+        />
+
+        <Field label="Document typeface" hint={FONT_OPTIONS.find((f) => f.value === settings.fontFamily)?.note}>
+          <select
+            value={settings.fontFamily}
+            onChange={(event) =>
+              updateSettings({ fontFamily: event.target.value as FontChoice })
+            }
+            className="h-8 w-full rounded-[var(--radius-sm)] border border-[var(--color-line)] bg-[var(--color-sunken)] px-2 text-[12px] text-[var(--color-ink)] outline-none focus:border-[var(--color-accent)] focus:shadow-[0_0_0_2px_var(--color-accent-soft)]"
+          >
+            {FONT_OPTIONS.map((font) => (
+              <option key={font.value} value={font.value}>
+                {font.label}
+              </option>
+            ))}
+          </select>
+        </Field>
+
+        <div
+          className="mt-4 rounded-[var(--radius-md)] border border-[var(--color-line)] bg-[var(--color-paper)] px-5 py-4"
+          style={{
+            fontFamily: resolveFontStack(settings.fontFamily),
+            fontSize: `${settings.fontSize}px`,
+            lineHeight: settings.lineHeight,
+            color: "var(--color-ink)",
+          }}
+        >
+          <div style={{ fontWeight: 650, letterSpacing: "-0.02em", lineHeight: 1.2 }}>
+            The quiet page
+          </div>
+          <div
+            style={{
+              marginTop: "0.5em",
+              color: "var(--color-ink-soft)",
+              fontSize: "0.82em",
+            }}
+          >
+            A good writing surface leaves room for the sentence to arrive.
+          </div>
+        </div>
+      </div>
+
+      <RangeControl
+        label="Size"
+        hint={`${settings.fontSize}px`}
+        min={12}
+        max={24}
+        step={1}
+        value={settings.fontSize}
+        onChange={(fontSize) => updateSettings({ fontSize })}
+      />
+
+      <RangeControl
+        label="Line height"
+        hint={settings.lineHeight.toFixed(1)}
+        min={1.3}
+        max={2.4}
+        step={0.1}
+        value={settings.lineHeight}
+        onChange={(lineHeight) => updateSettings({ lineHeight })}
+      />
     </div>
   );
 }
 
-function ToggleSetting({
+function RangeControl({
   label,
-  checked,
+  hint,
+  min,
+  max,
+  step,
+  value,
   onChange,
 }: {
   label: string;
-  checked: boolean;
-  onChange: (v: boolean) => void;
+  hint: string;
+  min: number;
+  max: number;
+  step: number;
+  value: number;
+  onChange: (value: number) => void;
 }) {
+  const percent = ((value - min) / (max - min)) * 100;
   return (
-    <label
-      className="flex items-center gap-2.5 cursor-pointer px-3 py-2.5 rounded-lg border transition-all duration-150 hover:bg-[var(--color-bg-hover)]"
-      style={{ borderColor: "var(--color-border)" }}
-    >
-      <div
-        className="relative w-9 h-5 rounded-full transition-colors duration-200"
-        style={{ background: checked ? "var(--color-accent)" : "var(--color-bg-hover)" }}
-      >
-        <input
-          type="checkbox"
-          checked={checked}
-          onChange={(e) => onChange(e.target.checked)}
-          className="sr-only"
+    <Field label={label} hint={hint}>
+      <input
+        type="range"
+        className="range"
+        min={min}
+        max={max}
+        step={step}
+        value={value}
+        onChange={(event) => onChange(Number(event.target.value))}
+        style={
+          {
+            "--range-fill": `linear-gradient(to right, var(--color-accent) ${percent}%, var(--color-line) ${percent}%)`,
+          } as CSSProperties
+        }
+      />
+    </Field>
+  );
+}
+
+function EditorPanel() {
+  const settings = useEditorStore((s) => s.settings);
+  const updateSettings = useEditorStore((s) => s.updateSettings);
+
+  return (
+    <div>
+      <PanelHeading
+        title="Editor"
+        description="Writing behavior and layout. These settings are remembered between sessions."
+      />
+      <div className="divide-y divide-[var(--color-line)]">
+        <Switch
+          checked={settings.autoSave}
+          onChange={(autoSave) => updateSettings({ autoSave })}
+          label="Auto-save"
+          description="Save files that already have a location as you type."
         />
-        <div
-          className="absolute top-0.5 left-0.5 w-4 h-4 rounded-full transition-transform duration-200"
-          style={{
-            background: checked ? "var(--color-bg-primary)" : "var(--color-text-muted)",
-            transform: checked ? "translateX(16px)" : "translateX(0)",
-          }}
+        <Switch
+          checked={settings.focusMode}
+          onChange={(focusMode) => updateSettings({ focusMode })}
+          label="Focus mode"
+          description="Dim every line except the one you are writing."
+        />
+        <Switch
+          checked={settings.typewriterMode}
+          onChange={(typewriterMode) => updateSettings({ typewriterMode })}
+          label="Typewriter scrolling"
+          description="Keep the current line vertically centered."
+        />
+        <Switch
+          checked={settings.fullWidth}
+          onChange={(fullWidth) => updateSettings({ fullWidth })}
+          label="Full width"
+          description="Use the whole window instead of a comfortable reading measure."
+        />
+        <Switch
+          checked={settings.vimMode}
+          onChange={(vimMode) => updateSettings({ vimMode })}
+          label="Vim mode"
+          description="Normal, insert, and visual modes in the editor."
+        />
+        <Switch
+          checked={settings.smoothCaret}
+          onChange={(smoothCaret) => updateSettings({ smoothCaret })}
+          label="Smooth caret"
+          description="Glide the caret between positions instead of jumping."
         />
       </div>
-      <span className="text-sm" style={{ color: "var(--color-text-secondary)" }}>
-        {label}
-      </span>
-    </label>
+    </div>
+  );
+}
+
+function ShortcutsPanel() {
+  return (
+    <div className="space-y-6">
+      <PanelHeading
+        title="Keyboard shortcuts"
+        description="Every action is also available from the command palette."
+      />
+      {SHORTCUTS.map((group) => (
+        <section key={group.group}>
+          <h4 className="mb-2 text-[11px] font-medium text-[var(--color-ink-muted)]">
+            {group.group}
+          </h4>
+          <div className="divide-y divide-[var(--color-line)] rounded-[var(--radius-md)] border border-[var(--color-line)]">
+            {group.items.map((item) => (
+              <div
+                key={item.keys}
+                className="flex items-center justify-between px-3 py-2 text-[12px]"
+              >
+                <span className="text-[var(--color-ink-soft)]">{item.label}</span>
+                <Kbd>{formatShortcut(item.keys)}</Kbd>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+    </div>
   );
 }

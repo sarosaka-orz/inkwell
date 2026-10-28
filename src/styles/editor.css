@@ -1,0 +1,441 @@
+/* ── CodeMirror shell ──────────────────────────────────────────────── */
+
+.cm-editor {
+  height: 100% !important;
+  background: transparent !important;
+  color: var(--color-ink);
+  font-family: var(--font-document);
+}
+
+.cm-editor.cm-focused {
+  outline: none !important;
+}
+
+.cm-editor .cm-scroller {
+  scroll-behavior: smooth;
+  overflow-anchor: auto;
+  font-family: inherit;
+}
+
+.cm-editor .cm-content {
+  padding: 4rem 0 45vh;
+  max-width: var(--editor-measure, 68ch);
+  margin: 0 auto;
+  caret-color: var(--color-accent);
+}
+
+.cm-editor .cm-line {
+  padding: 0 clamp(1.5rem, 5vw, 4rem);
+}
+
+.cm-full-width .cm-content {
+  max-width: none;
+}
+
+/* Source mode: keep line numbers next to the centered text instead of
+   pinning them to the far edge of the window. */
+.cm-source-mode .cm-gutters {
+  background: transparent !important;
+  border-right: none !important;
+  min-width: max(38px, calc((100% - var(--editor-measure, 68ch)) / 2));
+  justify-content: flex-end;
+  padding-right: 6px;
+}
+
+.cm-source-mode .cm-lineNumbers .cm-gutterElement {
+  padding: 0 8px 0 4px !important;
+  min-width: 28px !important;
+}
+
+.cm-editor .cm-gutters {
+  background: var(--color-canvas) !important;
+  color: var(--color-ink-muted) !important;
+  border-right: 1px solid var(--color-line) !important;
+  font-family: var(--font-mono);
+  font-size: 11px;
+}
+
+.cm-lineNumbers .cm-gutterElement {
+  padding: 0 10px 0 16px !important;
+  min-width: 38px !important;
+  opacity: 0.55;
+}
+
+/* Live writing stays calm; the caret is the only line indicator. */
+.cm-editor .cm-activeLine {
+  background: transparent !important;
+}
+
+.cm-source-mode .cm-activeLine {
+  background: var(--color-hover) !important;
+}
+
+.cm-editor .cm-activeLineGutter {
+  background: transparent !important;
+  color: var(--color-ink-soft) !important;
+}
+
+.cm-editor .cm-selectionBackground {
+  background: var(--color-selection) !important;
+}
+
+.cm-editor .cm-cursor {
+  border-left-color: var(--color-accent) !important;
+  border-left-width: 2px !important;
+  border-radius: 1px;
+}
+
+/* Smooth caret: glide between positions instead of jumping. */
+.cm-smooth-caret .cm-cursor {
+  transition:
+    left 90ms cubic-bezier(0.16, 1, 0.3, 1),
+    top 90ms cubic-bezier(0.16, 1, 0.3, 1),
+    height 90ms cubic-bezier(0.16, 1, 0.3, 1);
+  will-change: left, top;
+}
+
+/* Suppress the slide when switching tabs or modes. */
+.cm-smooth-caret.cm-caret-no-anim .cm-cursor {
+  transition: none !important;
+}
+
+/* ── Read-only preview ─────────────────────────────────────────────── */
+
+.cm-preview-mode .cm-cursorLayer {
+  display: none;
+}
+
+.cm-preview-mode .cm-activeLine,
+.cm-preview-mode .cm-activeLineGutter {
+  background: transparent !important;
+}
+
+.cm-preview-mode .cm-content {
+  cursor: default;
+}
+
+.cm-preview-mode .mermaid-container button {
+  display: none;
+}
+
+.cm-preview-mode .cm-table-widget-wrap,
+.cm-preview-mode .cm-rendered-image-wrap,
+.cm-preview-mode .cm-math-block {
+  cursor: default;
+}
+
+.cm-typewriter-mode .cm-content {
+  padding-top: 38vh !important;
+  padding-bottom: 55vh !important;
+}
+
+.cm-focus-mode .cm-line:not(.cm-activeLine) {
+  opacity: 0.34 !important;
+  transition: opacity 0.2s ease;
+}
+
+.cm-focus-mode .cm-activeLine {
+  opacity: 1 !important;
+}
+
+/* ── Headings ──────────────────────────────────────────────────────── */
+
+.cm-editor .cm-header-1 {
+  font-size: 1.95em;
+  font-weight: 700;
+  line-height: 1.18;
+  margin-top: 1.5em;
+  margin-bottom: 0.4em;
+  letter-spacing: -0.022em;
+  color: var(--color-ink);
+}
+
+.cm-editor .cm-header-2 {
+  font-size: 1.45em;
+  font-weight: 650;
+  line-height: 1.25;
+  margin-top: 1.35em;
+  margin-bottom: 0.35em;
+  letter-spacing: -0.014em;
+  color: var(--color-ink);
+}
+
+.cm-editor .cm-header-3 {
+  font-size: 1.18em;
+  font-weight: 620;
+  line-height: 1.35;
+  margin-top: 1.15em;
+  margin-bottom: 0.3em;
+  color: var(--color-ink);
+}
+
+.cm-editor .cm-header-4,
+.cm-editor .cm-header-5,
+.cm-editor .cm-header-6 {
+  font-size: 1.02em;
+  font-weight: 620;
+  line-height: 1.45;
+  margin-top: 1em;
+  margin-bottom: 0.25em;
+  color: var(--color-ink);
+}
+
+/* ── Inline formatting ─────────────────────────────────────────────── */
+
+.cm-editor .cm-strong {
+  font-weight: 700;
+  color: var(--color-ink);
+}
+
+.cm-editor .cm-emphasis {
+  font-style: italic;
+}
+
+.cm-editor .cm-strikethrough {
+  text-decoration: line-through;
+  color: var(--color-ink-muted);
+}
+
+.cm-editor .cm-inline-code {
+  font-family: var(--font-mono);
+  background: var(--color-sunken);
+  color: var(--color-accent);
+  padding: 0.14em 0.4em;
+  border-radius: var(--radius-xs);
+}
+
+.cm-editor .cm-link-text {
+  color: var(--color-accent);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+  text-decoration-thickness: 1px;
+  cursor: pointer;
+}
+
+.cm-editor .cm-link-text:hover {
+  color: var(--color-accent-hover);
+}
+
+.cm-editor .cm-highlight {
+  background: var(--color-accent-soft) !important;
+  color: inherit !important;
+  border-radius: var(--radius-xs);
+  padding: 0.1em 0.3em;
+}
+
+.cm-editor .cm-footnote-ref {
+  font-size: 0.72em;
+  vertical-align: super;
+  color: var(--color-accent);
+  font-weight: 650;
+  cursor: pointer;
+}
+
+/* ── Blocks ────────────────────────────────────────────────────────── */
+
+.cm-editor .cm-line.cm-quote {
+  border-left: 2px solid var(--color-accent);
+  padding: 0.2em 0 0.2em 1.1em;
+  color: var(--color-ink-soft);
+  font-style: italic;
+  margin: 0.8em 0 0.8em clamp(1.5rem, 5vw, 4rem);
+}
+
+/* A fenced block is one continuous panel, not a stack of per-line cards. */
+.cm-editor .cm-line.cm-code-block {
+  position: relative;
+  z-index: 0;
+  font-family: var(--font-mono);
+  padding-left: calc(clamp(1.5rem, 5vw, 4rem) + 1.05em);
+  padding-right: calc(clamp(1.5rem, 5vw, 4rem) + 1.05em);
+}
+
+.cm-editor .cm-line.cm-code-block::before {
+  content: "";
+  position: absolute;
+  inset: 0 clamp(1.5rem, 5vw, 4rem);
+  z-index: -1;
+  background: var(--color-sunken);
+  pointer-events: none;
+}
+
+.cm-editor .cm-line.cm-code-block-first {
+  padding-top: 0.8em;
+}
+
+.cm-editor .cm-line.cm-code-block-last {
+  padding-bottom: 0.8em;
+}
+
+.cm-editor .cm-line.cm-code-block-first::before {
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.cm-editor .cm-line.cm-code-block-last::before {
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.cm-editor .cm-line.cm-code-block-first.cm-code-block-last::before {
+  border-radius: var(--radius-md);
+}
+
+/* Fence text is hidden in the rendered block; collapse its line so it does
+   not leave a blank gap above or below the panel. It expands again when the
+   selection reaches the fence. */
+.cm-editor .cm-line.cm-code-fence-hidden {
+  height: 0;
+  line-height: 0;
+  font-size: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+.cm-editor .cm-hr-widget {
+  border: none;
+  border-top: 1px solid var(--color-line);
+  margin: 1.8em 0;
+}
+
+/* Task checkbox */
+.cm-editor .cm-task-checkbox {
+  appearance: none;
+  -webkit-appearance: none;
+  width: 15px;
+  height: 15px;
+  border: 1.5px solid var(--color-ink-muted);
+  border-radius: 4px;
+  outline: none;
+  cursor: pointer;
+  vertical-align: middle;
+  margin-right: 8px;
+  position: relative;
+  transition:
+    border-color 0.15s ease,
+    background-color 0.15s ease;
+  background: transparent;
+}
+
+.cm-editor .cm-task-checkbox:hover {
+  border-color: var(--color-accent);
+}
+
+.cm-editor .cm-task-checkbox:disabled {
+  cursor: default;
+  opacity: 0.85;
+}
+
+.cm-editor .cm-task-checkbox:checked {
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+}
+
+.cm-editor .cm-task-checkbox:checked::after {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 1px;
+  width: 4px;
+  height: 7.5px;
+  border: solid var(--color-accent-contrast);
+  border-width: 0 1.5px 1.5px 0;
+  transform: rotate(45deg);
+}
+
+/* ── Math ──────────────────────────────────────────────────────────── */
+
+.cm-math-block {
+  padding: 1.1em 1.35em;
+  margin: 1em 0;
+  background: var(--color-sunken);
+  border-radius: var(--radius-md);
+  overflow-x: auto;
+}
+
+.cm-math-block .katex-display {
+  margin: 0;
+}
+
+.cm-math-inline .katex {
+  font-size: 1.04em;
+}
+
+/* ── Mermaid ───────────────────────────────────────────────────────── */
+
+.mermaid-container {
+  background: var(--color-sunken);
+  border-radius: var(--radius-md);
+  padding: 1.25rem;
+  margin: 1.2em 0;
+  text-align: center;
+  overflow-x: auto;
+}
+
+.mermaid-container svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.mermaid-error {
+  color: var(--color-danger);
+  background: var(--color-accent-soft);
+  border: 1px solid var(--color-line);
+  border-radius: var(--radius-sm);
+  padding: 0.75rem 1rem;
+  font-family: var(--font-mono);
+  font-size: 0.8rem;
+  text-align: left;
+}
+
+/* ── Tables ────────────────────────────────────────────────────────── */
+
+.cm-table-widget-wrap {
+  margin: 1.2em 0;
+  overflow-x: auto;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-line);
+  background: var(--color-paper);
+}
+
+/* ── Images ────────────────────────────────────────────────────────── */
+
+.cm-rendered-image-wrap img {
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-line);
+}
+
+/* ── Syntax highlighting ───────────────────────────────────────────── */
+
+.cm-code-block .hljs-keyword,
+.cm-code-block .hljs-selector-tag {
+  color: var(--color-syntax-keyword);
+}
+.cm-code-block .hljs-string,
+.cm-code-block .hljs-attr {
+  color: var(--color-syntax-string);
+}
+.cm-code-block .hljs-number,
+.cm-code-block .hljs-literal {
+  color: var(--color-syntax-number);
+}
+.cm-code-block .hljs-comment,
+.cm-code-block .hljs-quote {
+  color: var(--color-syntax-comment);
+  font-style: italic;
+}
+.cm-code-block .hljs-function,
+.cm-code-block .hljs-title,
+.cm-code-block .hljs-built_in {
+  color: var(--color-syntax-function);
+}
+.cm-code-block .hljs-type,
+.cm-code-block .hljs-class {
+  color: var(--color-syntax-type);
+}
+.cm-code-block .hljs-operator,
+.cm-code-block .hljs-punctuation {
+  color: var(--color-syntax-operator);
+}
+.cm-code-block .hljs-variable,
+.cm-code-block .hljs-name {
+  color: var(--color-syntax-variable);
+}

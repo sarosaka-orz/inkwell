@@ -21,7 +21,3 @@ serde_json = "1"
 tokio = { version = "1", features = ["full"] }
 dirs = "6"
 chrono = { version = "0.4", features = ["serde"] }
-
-[target.'cfg(any(target_os = "linux", target_os = "dragonfly", target_os = "freebsd", target_os = "openbsd", target_os = "netbsd"))'.dependencies]
-webkit2gtk = { version = "2", features = ["v2_22"] }
-gtk = "0.18"

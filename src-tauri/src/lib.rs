@@ -10,11 +10,11 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             file_ops::read_file,
             file_ops::write_file,
+            file_ops::open_url,
             file_ops::read_directory,
             file_ops::get_recent_files,
             file_ops::add_recent_file,
             file_ops::generate_example,
-            file_ops::export_pdf,
         ])
         .run(tauri::generate_context!())
         .expect("error while running tauri application");

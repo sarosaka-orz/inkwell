@@ -1,46 +1,51 @@
+import { AlertCircle, CheckCircle2, Info, X } from "lucide-react";
 import { useEditorStore } from "../../store/editorStore";
-import { AlertCircle, CheckCircle, Info, X } from "lucide-react";
 
-const iconMap = {
-  info: <Info size={15} />,
-  success: <CheckCircle size={15} />,
-  error: <AlertCircle size={15} />,
+const ICONS = {
+  success: CheckCircle2,
+  error: AlertCircle,
+  info: Info,
 };
 
-const colorMap = {
-  info: "var(--color-accent)",
-  success: "var(--color-success)",
-  error: "var(--color-danger)",
+const COLORS = {
+  success: "text-[var(--color-success)]",
+  error: "text-[var(--color-danger)]",
+  info: "text-[var(--color-accent)]",
 };
 
 export function ToastContainer() {
-  const { toasts, removeToast } = useEditorStore();
+  const toasts = useEditorStore((s) => s.toasts);
+  const removeToast = useEditorStore((s) => s.removeToast);
+
+  if (toasts.length === 0) return null;
 
   return (
-    <div className="fixed top-4 right-4 z-50 flex flex-col gap-2 pointer-events-none">
-      {toasts.map((toast) => (
-        <div
-          key={toast.id}
-          className="toast-enter flex items-center gap-2.5 px-4 py-2.5 rounded-lg shadow-lg text-sm pointer-events-auto"
-          style={{
-            background: "var(--color-bg-tertiary)",
-            border: `1px solid var(--color-border)`,
-            color: "var(--color-text-primary)",
-            backdropFilter: "blur(8px)",
-            boxShadow: "0 4px 16px rgba(0,0,0,0.2)",
-          }}
-        >
-          <span style={{ color: colorMap[toast.type] }}>{iconMap[toast.type]}</span>
-          <span className="text-[13px]">{toast.message}</span>
-          <button
-            onClick={() => removeToast(toast.id)}
-            className="ml-1 p-0.5 rounded hover:bg-[var(--color-bg-hover)] transition-colors"
-            style={{ color: "var(--color-text-muted)" }}
+    <div
+      className="pointer-events-none fixed bottom-[calc(var(--statusbar-h)+12px)] right-3 flex flex-col items-end gap-1.5"
+      style={{ zIndex: 75 }}
+      aria-live="polite"
+    >
+      {toasts.map((toast) => {
+        const Icon = ICONS[toast.type];
+        return (
+          <div
+            key={toast.id}
+            role="status"
+            className="pointer-events-auto flex max-w-[min(420px,80vw)] items-center gap-2 rounded-[var(--radius-md)] border border-[var(--color-line)] bg-[var(--color-surface)] py-1.5 pl-2.5 pr-1.5 text-[11.5px] shadow-[var(--shadow-dock)] animate-fade-up"
           >
-            <X size={13} />
-          </button>
-        </div>
-      ))}
+            <Icon size={13} className={`shrink-0 ${COLORS[toast.type]}`} />
+            <span className="min-w-0 flex-1 text-[var(--color-ink-soft)]">{toast.message}</span>
+            <button
+              type="button"
+              aria-label="Dismiss notification"
+              onClick={() => removeToast(toast.id)}
+              className="flex h-5 w-5 shrink-0 items-center justify-center rounded-[var(--radius-xs)] text-[var(--color-ink-muted)] transition-colors hover:bg-[var(--color-hover)] hover:text-[var(--color-ink)]"
+            >
+              <X size={11} />
+            </button>
+          </div>
+        );
+      })}
     </div>
   );
 }

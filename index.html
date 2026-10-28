@@ -1,9 +1,32 @@
 <!doctype html>
-<html lang="en">
+<html lang="en" data-theme="inkwell-dark">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="color-scheme" content="dark light" />
     <title>Inkwell</title>
+    <script>
+      // Apply the cached palette before first paint to avoid a theme flash.
+      (function () {
+        try {
+          var allowed = [
+            "inkwell-dark",
+            "tokyo-night",
+            "nord",
+            "dracula",
+            "github-dark",
+            "craft-paper",
+            "github-light",
+          ];
+          var stored = localStorage.getItem("inkwell:theme");
+          if (allowed.indexOf(stored) !== -1) {
+            document.documentElement.dataset.theme = stored;
+          }
+        } catch (e) {
+          /* storage unavailable — keep the default */
+        }
+      })();
+    </script>
   </head>
   <body class="overflow-hidden">
     <div id="root"></div>
