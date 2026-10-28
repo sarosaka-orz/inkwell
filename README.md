@@ -28,6 +28,8 @@ Inkwell is a cross-platform desktop application that renders Markdown seamlessly
 - **Command Palette (`Ctrl+P`)**: Fuzzy jump between open tabs and recent files, run every command, or jump to a heading.
 - **Find & Replace (`Ctrl+F`)**: Search with match counter, previous/next navigation, case sensitivity, regex, and replace all.
 - **Debounced Auto-Save**: Real-time background saving with visual status indicators (`Saved`, `Saving...`, `Unsaved`).
+- **Close Protection & Draft Recovery**: Closing a dirty tab or the window asks first, and unsaved work is recovered from a local draft after a crash or accidental quit.
+- **Links Open Outside**: Web and mail links open in the system browser; in write mode use Ctrl/Cmd-click so a plain click still places the cursor.
 - **Workspace File Tree**: Browse and open files directly from your workspace directory.
 
 ### 🪶 Quiet, Document-First Interface
@@ -53,7 +55,7 @@ Inkwell is a cross-platform desktop application that renders Markdown seamlessly
 - **Full Vim Mode**: Normal, Insert, and Visual modes with status bar indicators.
 
 ### 📤 Export & Sharing
-- **Export to PDF**: Native print / PDF generation pipeline.
+- **Export to PDF**: System print dialog with “Save as PDF”, typeset with the document's own styles.
 - **Export to HTML**: Self-contained single HTML document with styles, KaTeX, and highlight.js bundled.
 - **Download Markdown**: Direct `.md` file download.
 - **Copy as Rich Text**: One-click clipboard copy for pasting into Google Docs, Word, or Notion.
@@ -105,7 +107,7 @@ Inkwell is a cross-platform desktop application that renders Markdown seamlessly
 
 ### Install & Run
 ```bash
-git clone https://github.com/your-username/inkwell.git
+git clone https://github.com/sarosaka-orz/inkwell.git
 cd inkwell
 pnpm install
 ```
@@ -128,6 +130,16 @@ pnpm tauri build
 
 ---
 
+## Testing
+
+```bash
+pnpm test        # unit tests (Vitest)
+pnpm exec tsc -b # typecheck
+pnpm build       # production build
+```
+
+---
+
 ## License
 
-MIT
+MIT — see [LICENSE](LICENSE).
