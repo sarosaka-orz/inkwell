@@ -235,7 +235,7 @@ export const useEditorStore = create<EditorState>((set, get) => ({
 
   mode: "live",
   setMode: (mode) => set({ mode }),
-  toggleMode: () => set((state) => ({ mode: state.mode === "live" ? "source" : "live" })),
+  toggleMode: () => set((state) => ({ mode: state.mode === "source" ? "live" : "source" })),
   toggleReadMode: () =>
     set((state) => ({ mode: state.mode === "preview" ? "live" : "preview" })),
 
