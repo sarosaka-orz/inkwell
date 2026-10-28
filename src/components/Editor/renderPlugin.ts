@@ -9,6 +9,7 @@ import {
 import { Facet, StateEffect, StateField, type EditorState } from "@codemirror/state";
 import katex from "katex";
 import mermaid from "mermaid";
+import { findBlocks, isInsideBlock, overlapsBlock, type BlockInfo } from "../../editor/blocks";
 
 /** Dispatch this to force widgets (notably Mermaid) to re-render. */
 export const themeRefresh = StateEffect.define<null>();
@@ -435,90 +436,6 @@ function cursorIntersects(selectionFrom: number, selectionTo: number, targetFrom
   return selectionTo >= targetFrom && selectionFrom <= targetTo;
 }
 
-// ── Block-level scanning ─────────────────────────────────────────────
-
-interface BlockInfo {
-  type: "code" | "math" | "mermaid" | "table";
-  from: number;
-  to: number;
-  lang?: string;
-  raw?: string;
-}
-
-function findBlocks(doc: string): BlockInfo[] {
-  const blocks: BlockInfo[] = [];
-  const lines = doc.split("\n");
-  let offset = 0;
-
-  let i = 0;
-  while (i < lines.length) {
-    const line = lines[i];
-
-    // Fenced code blocks: ```
-    const fenceMatch = line.match(/^```(\w*)/);
-    if (fenceMatch) {
-      const lang = fenceMatch[1] || "";
-      const from = offset;
-      let j = i + 1;
-      while (j < lines.length && !lines[j].startsWith("```")) j++;
-      const blockLines = lines.slice(i, j < lines.length ? j + 1 : lines.length);
-      const to = offset + blockLines.join("\n").length;
-      const inner = lines.slice(i + 1, j).join("\n");
-
-      if (lang === "mermaid") {
-        blocks.push({ type: "mermaid", from, to, lang: inner });
-      } else {
-        blocks.push({ type: "code", from, to, lang });
-      }
-      i = j < lines.length ? j + 1 : lines.length;
-      offset = to + 1;
-      continue;
-    }
-
-    // Math blocks: $$
-    if (line.trim() === "$$") {
-      const from = offset;
-      let j = i + 1;
-      while (j < lines.length && lines[j].trim() !== "$$") j++;
-      const blockLines = lines.slice(i, j < lines.length ? j + 1 : lines.length);
-      const to = offset + blockLines.join("\n").length;
-      const inner = lines.slice(i + 1, j).join("\n");
-
-      blocks.push({ type: "math", from, to, lang: inner });
-      i = j < lines.length ? j + 1 : lines.length;
-      offset = to + 1;
-      continue;
-    }
-
-    // Markdown Table blocks: begins with | and line i+1 has | :-- |
-    if (line.trim().startsWith("|") && line.trim().endsWith("|") && i + 1 < lines.length) {
-      const nextLine = lines[i + 1].trim();
-      if (nextLine.startsWith("|") && /^[|\s:-]+$/.test(nextLine)) {
-        const from = offset;
-        let j = i + 2;
-        while (j < lines.length && lines[j].trim().startsWith("|") && lines[j].trim().endsWith("|")) {
-          j++;
-        }
-        const tableLines = lines.slice(i, j);
-        const to = offset + tableLines.join("\n").length;
-        blocks.push({ type: "table", from, to, raw: tableLines.join("\n") });
-        i = j;
-        offset = to + 1;
-        continue;
-      }
-    }
-
-    offset += line.length + 1;
-    i++;
-  }
-
-  return blocks;
-}
-
-function isInsideBlock(blocks: BlockInfo[], pos: number): boolean {
-  return blocks.some((b) => pos >= b.from && pos < b.to);
-}
-
 // Blocks only change when the document does, so cache them across selections.
 let blockCache: { doc: string; blocks: BlockInfo[] } = { doc: "", blocks: [] };
 
@@ -602,19 +519,40 @@ export function buildDecorations(view: EditorView): DecorationSet {
   const blocks = getBlocks(doc);
 
   // ── Block-level line styling (code blocks only) ──
+  // Decorate each content line instead of marking the whole range: a mark
+  // split across lines paints a separate box per line, which looks like a
+  // stack of cards. Line decorations share one continuous panel.
   for (const block of blocks) {
     if (block.type !== "code") continue;
-    const firstLine = view.state.doc.lineAt(block.from);
-    const lastLine = view.state.doc.lineAt(Math.max(block.from, block.to - 1));
 
-    if (firstLine.to + 1 < lastLine.from) {
-      pushDeco(decoList, firstLine.to + 1, lastLine.from, Decoration.mark({ class: "cm-code-block" }));
+    const contentFrom = block.contentFrom ?? block.from;
+    const contentTo = block.contentTo ?? block.to;
+    const fenceLine = view.state.doc.lineAt(block.from);
+
+    if (contentTo > contentFrom) {
+      const firstLine = view.state.doc.lineAt(contentFrom);
+      const lastLine = view.state.doc.lineAt(contentTo - 1);
+
+      for (let n = firstLine.number; n <= lastLine.number; n++) {
+        const line = view.state.doc.line(n);
+        const classes = ["cm-code-block"];
+        if (n === firstLine.number) classes.push("cm-code-block-first");
+        if (n === lastLine.number) classes.push("cm-code-block-last");
+        decoList.push({
+          from: line.from,
+          to: line.from,
+          deco: Decoration.line({ attributes: { class: classes.join(" ") } }),
+        });
+      }
     }
 
     // Preview hides the fence lines entirely; live mode keeps them editable.
-    if (preview && lastLine.number !== firstLine.number) {
-      pushDeco(decoList, firstLine.from, firstLine.to, Decoration.replace({}));
-      pushDeco(decoList, lastLine.from, lastLine.to, Decoration.replace({}));
+    if (preview && block.closed) {
+      const lastLine = view.state.doc.lineAt(Math.max(block.from, block.to - 1));
+      pushDeco(decoList, fenceLine.from, fenceLine.to, Decoration.replace({}));
+      if (lastLine.number !== fenceLine.number) {
+        pushDeco(decoList, lastLine.from, lastLine.to, Decoration.replace({}));
+      }
     }
   }
 
@@ -717,7 +655,7 @@ export function buildDecorations(view: EditorView): DecorationSet {
   // ── Inline decorations (Bold, Italic, Strikethrough, Code, Highlight, Link, Image, Inline Math) ──
   // Images: ![alt](src)
   for (const m of doc.matchAll(/!\[([^\]]*)\]\(([^)]+)\)/g)) {
-    if (m.index !== undefined && !isInsideBlock(blocks, m.index)) {
+    if (m.index !== undefined && !overlapsBlock(blocks, m.index, m.index + m[0].length)) {
       const matchFrom = m.index;
       const matchTo = matchFrom + m[0].length;
       if (preview || !cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
@@ -735,7 +673,7 @@ export function buildDecorations(view: EditorView): DecorationSet {
 
   // Links: [text](url)
   for (const m of doc.matchAll(/(?<!!)\[([^\]]+)\]\(([^)]+)\)/g)) {
-    if (m.index !== undefined && !isInsideBlock(blocks, m.index)) {
+    if (m.index !== undefined && !overlapsBlock(blocks, m.index, m.index + m[0].length)) {
       const linkStart = m.index;
       const textStart = linkStart + 1;
       const textEnd = textStart + m[1].length;
@@ -751,7 +689,7 @@ export function buildDecorations(view: EditorView): DecorationSet {
 
   // Highlight: ==text==
   for (const m of doc.matchAll(/==(.+?)==/g)) {
-    if (m.index !== undefined && !isInsideBlock(blocks, m.index)) {
+    if (m.index !== undefined && !overlapsBlock(blocks, m.index, m.index + m[0].length)) {
       const matchFrom = m.index;
       const matchTo = matchFrom + m[0].length;
       if (preview || !cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
@@ -764,7 +702,7 @@ export function buildDecorations(view: EditorView): DecorationSet {
 
   // Bold: **text** or __text__
   for (const m of doc.matchAll(/(\*\*|__)(.+?)\1/g)) {
-    if (m.index !== undefined && !isInsideBlock(blocks, m.index)) {
+    if (m.index !== undefined && !overlapsBlock(blocks, m.index, m.index + m[0].length)) {
       const matchFrom = m.index;
       const matchTo = matchFrom + m[0].length;
       if (preview || !cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
@@ -777,7 +715,7 @@ export function buildDecorations(view: EditorView): DecorationSet {
 
   // Italic: *text* or _text_
   for (const m of doc.matchAll(/(?<!\*|_)(\*|_)(?!\*|_)(.+?)(?<!\*|_)\1(?!\*|_)/g)) {
-    if (m.index !== undefined && !isInsideBlock(blocks, m.index)) {
+    if (m.index !== undefined && !overlapsBlock(blocks, m.index, m.index + m[0].length)) {
       const matchFrom = m.index;
       const matchTo = matchFrom + m[0].length;
       if (preview || !cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
@@ -790,7 +728,7 @@ export function buildDecorations(view: EditorView): DecorationSet {
 
   // Strikethrough: ~~text~~
   for (const m of doc.matchAll(/~~(.+?)~~/g)) {
-    if (m.index !== undefined && !isInsideBlock(blocks, m.index)) {
+    if (m.index !== undefined && !overlapsBlock(blocks, m.index, m.index + m[0].length)) {
       const matchFrom = m.index;
       const matchTo = matchFrom + m[0].length;
       if (preview || !cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
@@ -801,9 +739,10 @@ export function buildDecorations(view: EditorView): DecorationSet {
     }
   }
 
-  // Inline code: `text`
-  for (const m of doc.matchAll(/`([^`]+)`/g)) {
-    if (m.index !== undefined && !isInsideBlock(blocks, m.index)) {
+  // Inline code: `text` (never across a line break, so a stray backtick
+  // cannot swallow the fence of the next block)
+  for (const m of doc.matchAll(/(?<!\\)`([^`\n]+)`/g)) {
+    if (m.index !== undefined && !overlapsBlock(blocks, m.index, m.index + m[0].length)) {
       const matchFrom = m.index;
       const matchTo = matchFrom + m[0].length;
       if (preview || !cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
@@ -816,7 +755,7 @@ export function buildDecorations(view: EditorView): DecorationSet {
 
   // Inline math: $...$
   for (const m of doc.matchAll(/(?<!\$)\$(?!\$)(.+?)(?<!\$)\$(?!\$)/g)) {
-    if (m.index !== undefined && !isInsideBlock(blocks, m.index)) {
+    if (m.index !== undefined && !overlapsBlock(blocks, m.index, m.index + m[0].length)) {
       const matchFrom = m.index;
       const matchTo = matchFrom + m[0].length;
       if (preview || !cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {
@@ -834,7 +773,7 @@ export function buildDecorations(view: EditorView): DecorationSet {
 
   // Footnote references: [^1]
   for (const m of doc.matchAll(/\[\^([^\]]+)\]/g)) {
-    if (m.index !== undefined && !isInsideBlock(blocks, m.index)) {
+    if (m.index !== undefined && !overlapsBlock(blocks, m.index, m.index + m[0].length)) {
       const matchFrom = m.index;
       const matchTo = matchFrom + m[0].length;
       if (preview || !cursorIntersects(sel.from, sel.to, matchFrom, matchTo)) {

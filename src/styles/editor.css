@@ -198,7 +198,6 @@
 
 .cm-editor .cm-inline-code {
   font-family: var(--font-mono);
-  font-size: 0.86em;
   background: var(--color-sunken);
   color: var(--color-accent);
   padding: 0.14em 0.4em;
@@ -242,16 +241,42 @@
   margin: 0.8em 0 0.8em clamp(1.5rem, 5vw, 4rem);
 }
 
-.cm-editor .cm-code-block {
+/* A fenced block is one continuous panel, not a stack of per-line cards. */
+.cm-editor .cm-line.cm-code-block {
+  position: relative;
+  z-index: 0;
   font-family: var(--font-mono);
-  font-size: 0.84em;
+  padding-left: calc(clamp(1.5rem, 5vw, 4rem) + 1.05em);
+  padding-right: calc(clamp(1.5rem, 5vw, 4rem) + 1.05em);
+}
+
+.cm-editor .cm-line.cm-code-block::before {
+  content: "";
+  position: absolute;
+  inset: 0 clamp(1.5rem, 5vw, 4rem);
+  z-index: -1;
   background: var(--color-sunken);
-  display: block;
-  padding: 1em 1.25em;
+  pointer-events: none;
+}
+
+.cm-editor .cm-line.cm-code-block-first {
+  padding-top: 0.8em;
+}
+
+.cm-editor .cm-line.cm-code-block-last {
+  padding-bottom: 0.8em;
+}
+
+.cm-editor .cm-line.cm-code-block-first::before {
+  border-radius: var(--radius-md) var(--radius-md) 0 0;
+}
+
+.cm-editor .cm-line.cm-code-block-last::before {
+  border-radius: 0 0 var(--radius-md) var(--radius-md);
+}
+
+.cm-editor .cm-line.cm-code-block-first.cm-code-block-last::before {
   border-radius: var(--radius-md);
-  line-height: 1.65;
-  color: var(--color-ink);
-  margin: 0.75em 0;
 }
 
 .cm-editor .cm-hr-widget {
