@@ -32,22 +32,21 @@
   max-width: none;
 }
 
-/* Source mode: a narrow line-number strip on the far right, leaving the
-   writing column centered instead of opening a wide gutter on the left. */
+/* Source mode: a narrow line-number strip on the left, leaving the
+   writing column centered instead of opening a wide gutter. */
 .cm-source-mode .cm-gutters {
-  order: 2;
   position: sticky;
-  left: auto;
-  right: 0;
+  left: 0;
+  right: auto;
   background: transparent !important;
   border: none !important;
   min-width: 0;
-  justify-content: flex-end;
-  padding: 0 4px 0 8px;
+  justify-content: flex-start;
+  padding: 0 8px 0 12px;
 }
 
 .cm-source-mode .cm-lineNumbers .cm-gutterElement {
-  padding: 0 2px 0 6px !important;
+  padding: 0 6px 0 4px !important;
   min-width: 24px !important;
   text-align: right;
 }
