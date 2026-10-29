@@ -1,8 +1,8 @@
 [package]
 name = "inkwell"
-version = "0.1.0"
-description = "A free, open-source Typora alternative"
-authors = ["you"]
+version = "0.2.0"
+description = "A quiet, document-first Markdown editor"
+authors = ["sarosaka-orz"]
 edition = "2021"
 
 [lib]

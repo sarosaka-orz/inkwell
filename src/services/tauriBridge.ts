@@ -141,13 +141,27 @@ export async function showOpenFolderDialog(): Promise<string | null> {
   return null;
 }
 
+export interface FileFilter {
+  name: string;
+  extensions: string[];
+}
+
+const markdownFilters: FileFilter[] = [
+  { name: "Markdown", extensions: ["md", "markdown", "txt"] },
+];
+
+const htmlFilters: FileFilter[] = [{ name: "HTML", extensions: ["html", "htm"] }];
+
 // Save File Dialog
-export async function showSaveFileDialog(defaultName: string = "untitled.md"): Promise<string | null> {
+export async function showSaveFileDialog(
+  defaultName: string = "untitled.md",
+  filters: FileFilter[] = markdownFilters,
+): Promise<string | null> {
   if (isTauri()) {
     const { save } = await import("@tauri-apps/plugin-dialog");
     const savePath = await save({
       defaultPath: defaultName,
-      filters: [{ name: "Markdown", extensions: ["md", "markdown", "txt"] }],
+      filters,
     });
     return savePath || null;
   }
@@ -191,8 +205,23 @@ export async function exportPdfDoc(html: string, defaultName: string = "document
   }
 }
 
-// Download file directly in web mode
-export function downloadFile(filename: string, content: string, mimeType: string = "text/markdown"): void {
+// Save an exported file. The browser gets a download; the desktop app asks for
+// a destination and writes through the native file command, because WebView
+// blob downloads are not reliable there.
+export async function downloadFile(
+  filename: string,
+  content: string,
+  mimeType: string = "text/markdown",
+): Promise<boolean> {
+  if (isTauri()) {
+    const extension = filename.split(".").pop()?.toLowerCase();
+    const filters = extension === "html" || extension === "htm" ? htmlFilters : markdownFilters;
+    const path = await showSaveFileDialog(filename, filters);
+    if (!path) return false;
+    await writeFile(path, content);
+    return true;
+  }
+
   const blob = new Blob([content], { type: `${mimeType};charset=utf-8` });
   const url = URL.createObjectURL(blob);
   const a = document.createElement("a");
@@ -202,6 +231,7 @@ export function downloadFile(filename: string, content: string, mimeType: string
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+  return true;
 }
 
 /** Only real web/mail links leave the app; relative paths stay in the draft. */

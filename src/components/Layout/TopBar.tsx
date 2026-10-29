@@ -208,7 +208,7 @@ export function TopBar() {
         <MenuItem
           label="Download Markdown"
           icon={<Download size={14} />}
-          onSelect={exportActiveMarkdown}
+          onSelect={() => void exportActiveMarkdown()}
         />
         <MenuItem
           label="Copy as rich text"

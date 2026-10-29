@@ -1,0 +1,44 @@
+# Maintainer: sarosaka-orz <sarosaka-orz@users.noreply.github.com>
+
+pkgname=inkwell-editor
+pkgver=0.2.0
+pkgrel=1
+pkgdesc='A quiet, document-first Markdown editor'
+arch=('x86_64' 'aarch64')
+url='https://github.com/sarosaka-orz/inkwell'
+license=('MIT')
+depends=('webkit2gtk-4.1' 'gtk3' 'librsvg' 'hicolor-icon-theme')
+makedepends=('git' 'rust' 'nodejs' 'pnpm')
+source=("git+${url}.git#tag=v${pkgver}")
+sha256sums=('SKIP')
+
+build() {
+  cd "$srcdir/inkwell"
+
+  # Keep pnpm's store inside the build directory so a clean chroot needs no
+  # writable home cache.
+  export PNPM_HOME="$srcdir/pnpm-home"
+  export PATH="$PNPM_HOME:$PATH"
+  pnpm install --frozen-lockfile --store-dir "$srcdir/pnpm-store"
+
+  # Use the Tauri CLI for the release build. A bare `cargo build --release`
+  # leaves Tauri's `dev` cfg enabled, which makes the packaged app load the
+  # dev server URL instead of the embedded assets.
+  export TAURI_ENV_DEBUG=false
+  pnpm tauri build --no-bundle
+}
+
+package() {
+  cd "$srcdir/inkwell"
+
+  install -Dm755 src-tauri/target/release/inkwell "$pkgdir/usr/bin/inkwell"
+  install -Dm644 packaging/inkwell.desktop "$pkgdir/usr/share/applications/inkwell.desktop"
+
+  install -Dm644 src-tauri/icons/32x32.png "$pkgdir/usr/share/icons/hicolor/32x32/apps/inkwell.png"
+  install -Dm644 src-tauri/icons/64x64.png "$pkgdir/usr/share/icons/hicolor/64x64/apps/inkwell.png"
+  install -Dm644 src-tauri/icons/128x128.png "$pkgdir/usr/share/icons/hicolor/128x128/apps/inkwell.png"
+  install -Dm644 src-tauri/icons/256x256.png "$pkgdir/usr/share/icons/hicolor/256x256/apps/inkwell.png"
+  install -Dm644 src-tauri/icons/icon.png "$pkgdir/usr/share/icons/hicolor/512x512/apps/inkwell.png"
+
+  install -Dm644 LICENSE "$pkgdir/usr/share/licenses/$pkgname/LICENSE"
+}
