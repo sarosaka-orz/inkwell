@@ -77,7 +77,8 @@ jobs:
             - `.deb` for Debian/Ubuntu
             - `.rpm` for Fedora/RHEL
 
-            Arch Linux users can install `inkwell-editor` from the AUR.
+            Arch Linux packaging is in `packaging/arch` (AUR package name
+            `inkwell-editor`).
 
             **macOS (unsigned)**
             The macOS build is not code-signed yet. On first launch, right-click

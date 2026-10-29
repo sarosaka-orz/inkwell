@@ -13,7 +13,7 @@ Inkwell is a cross-platform desktop application that renders Markdown seamlessly
 | Platform | Package |
 | :--- | :--- |
 | Linux | `.AppImage`, `.deb`, and `.rpm` from [Releases](https://github.com/sarosaka-orz/inkwell/releases) |
-| Arch Linux | `inkwell-editor` on the AUR, or build from [packaging/arch](packaging/arch/PKGBUILD) |
+| Arch Linux | Build from [packaging/arch](packaging/arch/PKGBUILD) with `makepkg -si` (AUR package `inkwell-editor`) |
 | macOS | Universal `.dmg` from [Releases](https://github.com/sarosaka-orz/inkwell/releases) |
 | Browser | <https://sarosaka-orz.github.io/inkwell/> |
 
