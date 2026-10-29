@@ -6,6 +6,8 @@ Inkwell is a cross-platform desktop application that renders Markdown seamlessly
 
 **v0.1.0 ships as a web app:** <https://sarosaka-orz.github.io/inkwell/>. Desktop packaging will follow in a later release.
 
+> **Web build notes:** edits autosave to browser local storage; use **Export → Markdown/HTML** to download a real file. Folder browsing and native desktop integrations are desktop-only.
+
 ---
 
 ## Features
