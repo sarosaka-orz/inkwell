@@ -21,9 +21,11 @@ build() {
   export PATH="$PNPM_HOME:$PATH"
   pnpm install --frozen-lockfile --store-dir "$srcdir/pnpm-store"
 
-  pnpm build
-
-  cargo build --release --locked --manifest-path src-tauri/Cargo.toml
+  # Use the Tauri CLI for the release build. A bare `cargo build --release`
+  # leaves Tauri's `dev` cfg enabled, which makes the packaged app load the
+  # dev server URL instead of the embedded assets.
+  export TAURI_ENV_DEBUG=false
+  pnpm tauri build --no-bundle
 }
 
 package() {
