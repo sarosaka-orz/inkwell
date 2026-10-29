@@ -3,6 +3,10 @@
 The AUR package is named **`inkwell-editor`** because the plain `inkwell` name is
 already provided by an unrelated package (`inkwell-bin`).
 
+> **AUR publication is on hold.** AUR account registration is currently
+> closed. Build locally with `makepkg -si`; the publish steps below are for
+> when registration reopens.
+
 ## Build and install locally
 
 ```bash

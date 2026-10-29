@@ -77,8 +77,8 @@ jobs:
             - `.deb` for Debian/Ubuntu
             - `.rpm` for Fedora/RHEL
 
-            Arch Linux packaging is in `packaging/arch` (AUR package name
-            `inkwell-editor`).
+            Arch Linux packaging is in `packaging/arch`; AUR publication is
+            on hold while AUR registration is closed.
 
             **macOS (unsigned)**
             The macOS build is not code-signed yet. On first launch, right-click

@@ -13,7 +13,7 @@ Inkwell is a cross-platform desktop application that renders Markdown seamlessly
 | Platform | Package |
 | :--- | :--- |
 | Linux | `.AppImage`, `.deb`, and `.rpm` from [Releases](https://github.com/sarosaka-orz/inkwell/releases) |
-| Arch Linux | Build from [packaging/arch](packaging/arch/PKGBUILD) with `makepkg -si` (AUR package `inkwell-editor`) |
+| Arch Linux | Build from [packaging/arch](packaging/arch/PKGBUILD) with `makepkg -si`; AUR publication is on hold |
 | macOS | Universal `.dmg` from [Releases](https://github.com/sarosaka-orz/inkwell/releases) |
 | Browser | <https://sarosaka-orz.github.io/inkwell/> |
 
@@ -165,7 +165,7 @@ Pushes to `main` build the browser app with `INKWELL_BASE=/inkwell/` and deploy 
 
 Pushing a `v*` tag builds Linux bundles (`.AppImage`, `.deb`, `.rpm`) and a universal macOS `.dmg` with [release-desktop.yml](.github/workflows/release-desktop.yml), then uploads them to a draft GitHub Release. The macOS build is unsigned for now.
 
-Arch Linux packaging is in [packaging/arch](packaging/arch/PKGBUILD) (package name `inkwell-editor`).
+Arch Linux packaging is in [packaging/arch](packaging/arch/PKGBUILD) (package name `inkwell-editor`). AUR publication is on hold while AUR registration is closed.
 
 ---
 
