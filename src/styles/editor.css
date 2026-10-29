@@ -32,19 +32,23 @@
   max-width: none;
 }
 
-/* Source mode: keep line numbers next to the centered text instead of
-   pinning them to the far edge of the window. */
+/* Source mode: a narrow line-number strip on the left, leaving the
+   writing column centered instead of opening a wide gutter. */
 .cm-source-mode .cm-gutters {
+  position: sticky;
+  left: 0;
+  right: auto;
   background: transparent !important;
-  border-right: none !important;
-  min-width: max(38px, calc((100% - var(--editor-measure, 68ch)) / 2));
-  justify-content: flex-end;
-  padding-right: 6px;
+  border: none !important;
+  min-width: 0;
+  justify-content: flex-start;
+  padding: 0 8px 0 12px;
 }
 
 .cm-source-mode .cm-lineNumbers .cm-gutterElement {
-  padding: 0 8px 0 4px !important;
-  min-width: 28px !important;
+  padding: 0 6px 0 4px !important;
+  min-width: 24px !important;
+  text-align: right;
 }
 
 .cm-editor .cm-gutters {

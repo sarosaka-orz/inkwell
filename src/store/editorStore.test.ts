@@ -81,3 +81,19 @@ describe("saving", () => {
     expect(useEditorStore.getState().saveStatus).toBe("saved");
   });
 });
+
+describe("source mode toggle", () => {
+  it("switches the whole document between write and source", () => {
+    useEditorStore.setState({ mode: "live" });
+    useEditorStore.getState().toggleMode();
+    expect(useEditorStore.getState().mode).toBe("source");
+    useEditorStore.getState().toggleMode();
+    expect(useEditorStore.getState().mode).toBe("live");
+  });
+
+  it("shows the source from read mode", () => {
+    useEditorStore.setState({ mode: "preview" });
+    useEditorStore.getState().toggleMode();
+    expect(useEditorStore.getState().mode).toBe("source");
+  });
+});

@@ -151,6 +151,7 @@ export function TopBar() {
         />
         <MenuItem
           label="Source mode"
+          shortcut={formatShortcut("Mod+/")}
           icon={<CodeXml size={14} />}
           checked={mode === "source"}
           onSelect={() => setMode("source")}

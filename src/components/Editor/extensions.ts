@@ -196,6 +196,15 @@ function handleUpdate(tabId: string, update: { docChanged: boolean; selectionSet
 
 const editorKeymap = [
   ...smartMarkdownKeymap,
+  // CodeMirror's default Mod-/ toggles line comments. Inkwell uses it to show
+  // the raw Markdown for the whole document, so bind it before the defaults.
+  {
+    key: "Mod-/",
+    run: () => {
+      useEditorStore.getState().toggleMode();
+      return true;
+    },
+  },
   ...defaultKeymap,
   ...historyKeymap,
   indentWithTab,
