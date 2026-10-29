@@ -1,5 +1,6 @@
-import { describe, expect, it } from "vitest";
-import { normalizeExternalUrl } from "./tauriBridge";
+// @vitest-environment jsdom
+import { afterEach, describe, expect, it, vi } from "vitest";
+import { downloadFile, normalizeExternalUrl } from "./tauriBridge";
 
 describe("normalizeExternalUrl", () => {
   it("accepts web and mail links", () => {
@@ -18,5 +19,24 @@ describe("normalizeExternalUrl", () => {
   it("rejects malformed input", () => {
     expect(normalizeExternalUrl("https://")).toBeNull();
     expect(normalizeExternalUrl("")).toBeNull();
+  });
+});
+
+describe("downloadFile", () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it("downloads through a blob link in the browser", async () => {
+    const createObjectURL = vi.fn(() => "blob:inkwell");
+    const revokeObjectURL = vi.fn();
+    Object.assign(URL, { createObjectURL, revokeObjectURL });
+    const click = vi.spyOn(HTMLAnchorElement.prototype, "click").mockImplementation(() => {});
+
+    await expect(downloadFile("notes.md", "# hi", "text/markdown")).resolves.toBe(true);
+
+    expect(createObjectURL).toHaveBeenCalledOnce();
+    expect(click).toHaveBeenCalledOnce();
+    expect(revokeObjectURL).toHaveBeenCalledWith("blob:inkwell");
   });
 });

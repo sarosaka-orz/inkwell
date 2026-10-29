@@ -127,8 +127,8 @@ export async function exportActiveHtml(): Promise<void> {
   const store = useEditorStore.getState();
   try {
     const html = await generateHtml(tab.content, tab.name);
-    downloadFile(`${baseName(tab.name)}.html`, html, "text/html");
-    store.addToast("Exported HTML", "success");
+    const saved = await downloadFile(`${baseName(tab.name)}.html`, html, "text/html");
+    if (saved) store.addToast("Exported HTML", "success");
   } catch (error) {
     store.addToast(`Export failed: ${error}`, "error");
   }
@@ -147,11 +147,16 @@ export async function exportActivePdf(): Promise<void> {
   }
 }
 
-export function exportActiveMarkdown(): void {
+export async function exportActiveMarkdown(): Promise<void> {
   const tab = getActiveTab();
   if (!tab) return;
-  downloadFile(tab.name || "document.md", tab.content, "text/markdown");
-  useEditorStore.getState().addToast("Downloaded Markdown", "success");
+  const store = useEditorStore.getState();
+  try {
+    const saved = await downloadFile(tab.name || "document.md", tab.content, "text/markdown");
+    if (saved) store.addToast("Downloaded Markdown", "success");
+  } catch (error) {
+    store.addToast(`Export failed: ${error}`, "error");
+  }
 }
 
 export async function copyActiveRichText(): Promise<void> {

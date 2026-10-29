@@ -4,9 +4,20 @@ A free, modern, open-source Markdown editor — built as a permanent alternative
 
 Inkwell is a cross-platform desktop application that renders Markdown seamlessly as you type, with live inline previews for headings, bold, italic, code, math, diagrams, tables, task lists, and more. No split-pane, no preview button — just write.
 
-**v0.1.0 ships as a web app:** <https://sarosaka-orz.github.io/inkwell/>. Desktop packaging will follow in a later release.
+**v0.2.0 adds desktop builds for Linux and macOS.** Download them from [GitHub Releases](https://github.com/sarosaka-orz/inkwell/releases). The browser build stays available at <https://sarosaka-orz.github.io/inkwell/>.
 
 > **Web build notes:** edits autosave to browser local storage; use **Export → Markdown/HTML** to download a real file. Folder browsing and native desktop integrations are desktop-only.
+
+## Download
+
+| Platform | Package |
+| :--- | :--- |
+| Linux | `.AppImage`, `.deb`, and `.rpm` from [Releases](https://github.com/sarosaka-orz/inkwell/releases) |
+| Arch Linux | `inkwell-editor` on the AUR, or build from [packaging/arch](packaging/arch/PKGBUILD) |
+| macOS | Universal `.dmg` from [Releases](https://github.com/sarosaka-orz/inkwell/releases) |
+| Browser | <https://sarosaka-orz.github.io/inkwell/> |
+
+> **macOS is unsigned for now.** On first launch, right-click **Inkwell.app** and choose **Open**, or run `xattr -dr com.apple.quarantine /Applications/Inkwell.app`.
 
 ---
 
@@ -67,6 +78,8 @@ Inkwell is a cross-platform desktop application that renders Markdown seamlessly
 ---
 
 ## Keyboard Shortcuts
+
+On macOS, use **Cmd** instead of **Ctrl**.
 
 | Shortcut | Action |
 | :--- | :--- |
@@ -147,6 +160,12 @@ pnpm build       # production build
 ## Web deployment
 
 Pushes to `main` build the browser app with `INKWELL_BASE=/inkwell/` and deploy `dist/` to GitHub Pages via [deploy-pages.yml](.github/workflows/deploy-pages.yml).
+
+## Desktop releases
+
+Pushing a `v*` tag builds Linux bundles (`.AppImage`, `.deb`, `.rpm`) and a universal macOS `.dmg` with [release-desktop.yml](.github/workflows/release-desktop.yml), then uploads them to a draft GitHub Release. The macOS build is unsigned for now.
+
+Arch Linux packaging is in [packaging/arch](packaging/arch/PKGBUILD) (package name `inkwell-editor`).
 
 ---
 

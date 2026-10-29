@@ -1,0 +1,12 @@
+[Desktop Entry]
+Type=Application
+Name=Inkwell
+GenericName=Markdown Editor
+Comment=A quiet, document-first Markdown editor
+Exec=inkwell
+Icon=inkwell
+Terminal=false
+Categories=Office;WordProcessor;TextEditor;
+Keywords=markdown;editor;writing;notes;
+StartupNotify=true
+StartupWMClass=inkwell
