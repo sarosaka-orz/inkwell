@@ -1,7 +1,7 @@
 export const SAMPLE_MARKDOWN = `# Welcome to Inkwell ✦
 
-> A free, modern, and open-source Markdown editor designed as a true alternative to Typora.
-> Real-time inline WYSIWYG rendering, distraction-free writing, and comprehensive syntax support.
+> A quiet place to write.
+> A free, open-source Markdown editor with live inline rendering, distraction-free writing, and comprehensive syntax support.
 
 ---
 
@@ -48,13 +48,13 @@ Click directly on any checkbox below to toggle its status in real time:
 
 Tables are formatted with clean borders and column alignments:
 
-| Feature | Typora | Obsidian | Inkwell |
-| :--- | :---: | :---: | :---: |
-| Inline WYSIWYG | ✅ | ✅ | ✅ |
-| LaTeX Math (KaTeX) | ✅ | ✅ | ✅ |
-| Mermaid Diagrams | ✅ | ✅ | ✅ |
-| Open Source & Free | ❌ | ❌ | ✅ |
-| Lightweight Tauri Core | ❌ | ❌ | ✅ |
+| Capability | Inkwell |
+| :--- | :---: |
+| Inline WYSIWYG | ✅ |
+| LaTeX Math (KaTeX) | ✅ |
+| Mermaid Diagrams | ✅ |
+| Open source & free | ✅ |
+| Lightweight Tauri core | ✅ |
 
 ---
 

@@ -1,9 +1,9 @@
-# Vibe Coding Prompt — Markdown Editor (Typora Alternative)
+# Vibe Coding Prompt — Markdown Editor
 
 ## 🎯 Project Overview
 
 Build a **free, open-source, cross-platform Markdown editor** as a desktop GUI application.
-Target: a permanent free alternative to Typora, with richer features and a better-looking UI.
+Target: a free, open-source Markdown editor with richer features and a better-looking UI.
 
 **Project name (placeholder):** `inkwell` (change freely)
 **Tech stack:** Tauri v2 + TypeScript + React + TailwindCSS
@@ -40,7 +40,7 @@ inkwell/
 ## ✅ Feature Requirements
 
 ### Core Editor
-- **WYSIWYG Markdown editing** — live inline rendering as you type (like Typora), NOT split-pane preview
+- **WYSIWYG Markdown editing** — live inline rendering as you type, NOT split-pane preview
 - Based on **ProseMirror** or **CodeMirror 6** with a custom Markdown schema
 - Full CommonMark + GFM (GitHub Flavored Markdown) support
 - Inline rendering of: **bold**, *italic*, ~~strikethrough~~, `inline code`, links, images
@@ -172,7 +172,7 @@ Build in this order to get a working prototype as fast as possible:
 
 Use this as your opening message:
 
-> 你是一個資深的 Tauri + React + TypeScript 工程師。我要做一個叫做 `inkwell` 的開源桌面 Markdown 編輯器，永久免費，作為 Typora 的替代品。
+> 你是一個資深的 Tauri + React + TypeScript 工程師。我要做一個叫做 `inkwell` 的開源桌面 Markdown 編輯器，永久免費。
 >
 > 請先幫我完成第一步：用 `create-tauri-app` scaffold 整個專案結構，並設定好所有必要的依賴套件（frontend 和 Rust 端），讓專案能夠成功執行 `pnpm tauri dev`。
 >
