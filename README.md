@@ -1,8 +1,12 @@
-# Inkwell
+<p align="center">
+  <img src="assets/icon.svg" width="80" height="80" alt="Inkwell icon" />
+</p>
 
-A free, modern, open-source Markdown editor — built as a permanent alternative to Typora.
+<h1 align="center">Inkwell</h1>
 
-Inkwell is a cross-platform desktop application that renders Markdown seamlessly as you type, with live inline previews for headings, bold, italic, code, math, diagrams, tables, task lists, and more. No split-pane, no preview button — just write.
+<p align="center"><strong>A quiet place to write.</strong></p>
+
+Inkwell is a free, open-source Markdown editor that renders your writing as you type — headings, code, math, diagrams, tables, task lists — without a split pane or a preview button. Just the page, and the sentence arriving.
 
 **v0.2.1 adds a remembered interface zoom.** Desktop builds for Linux and macOS are on [GitHub Releases](https://github.com/sarosaka-orz/inkwell/releases). The homepage is <https://sarosaka-orz.github.io/inkwell/>; the browser editor is <https://sarosaka-orz.github.io/inkwell/app/>.
 
