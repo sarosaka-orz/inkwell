@@ -34,8 +34,15 @@ jobs:
 
       - name: Build web app
         env:
-          INKWELL_BASE: /inkwell/
+          INKWELL_BASE: /inkwell/app/
+          INKWELL_OUT_DIR: dist/app
         run: pnpm build
+
+      - name: Assemble landing page
+        run: cp -R site/. dist/
+
+      - name: Check site output
+        run: test -f dist/index.html && test -f dist/app/index.html
 
       - uses: actions/configure-pages@v5
         with:
