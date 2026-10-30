@@ -1,6 +1,6 @@
 pkgbase = inkwell-editor
 	pkgdesc = A quiet, document-first Markdown editor
-	pkgver = 0.2.0
+	pkgver = 0.2.1
 	pkgrel = 1
 	url = https://github.com/sarosaka-orz/inkwell
 	arch = x86_64
@@ -14,7 +14,7 @@ pkgbase = inkwell-editor
 	depends = gtk3
 	depends = librsvg
 	depends = hicolor-icon-theme
-	source = git+https://github.com/sarosaka-orz/inkwell.git#tag=v0.2.0
+	source = git+https://github.com/sarosaka-orz/inkwell.git#tag=v0.2.1
 	sha256sums = SKIP
 
 pkgname = inkwell-editor

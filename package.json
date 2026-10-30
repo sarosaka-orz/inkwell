@@ -1,6 +1,6 @@
 {
   "name": "inkwell",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "description": "A free, open-source Typora alternative — cross-platform Markdown editor",
   "private": true,
   "type": "module",

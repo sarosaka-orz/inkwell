@@ -1,7 +1,7 @@
 # Maintainer: sarosaka-orz <sarosaka-orz@users.noreply.github.com>
 
 pkgname=inkwell-editor
-pkgver=0.2.0
+pkgver=0.2.1
 pkgrel=1
 pkgdesc='A quiet, document-first Markdown editor'
 arch=('x86_64' 'aarch64')
