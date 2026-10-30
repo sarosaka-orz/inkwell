@@ -4,7 +4,7 @@ A free, modern, open-source Markdown editor — built as a permanent alternative
 
 Inkwell is a cross-platform desktop application that renders Markdown seamlessly as you type, with live inline previews for headings, bold, italic, code, math, diagrams, tables, task lists, and more. No split-pane, no preview button — just write.
 
-**v0.2.1 adds a remembered interface zoom.** Desktop builds for Linux and macOS are on [GitHub Releases](https://github.com/sarosaka-orz/inkwell/releases). The browser build stays available at <https://sarosaka-orz.github.io/inkwell/>.
+**v0.2.1 adds a remembered interface zoom.** Desktop builds for Linux and macOS are on [GitHub Releases](https://github.com/sarosaka-orz/inkwell/releases). The homepage is <https://sarosaka-orz.github.io/inkwell/>; the browser editor is <https://sarosaka-orz.github.io/inkwell/app/>.
 
 > **Web build notes:** edits autosave to browser local storage; use **Export → Markdown/HTML** to download a real file. Folder browsing and native desktop integrations are desktop-only.
 
@@ -15,7 +15,7 @@ Inkwell is a cross-platform desktop application that renders Markdown seamlessly
 | Linux | `.AppImage`, `.deb`, and `.rpm` from [Releases](https://github.com/sarosaka-orz/inkwell/releases) |
 | Arch Linux | Build from [packaging/arch](packaging/arch/PKGBUILD) with `makepkg -si`; AUR publication is on hold |
 | macOS | Universal `.dmg` from [Releases](https://github.com/sarosaka-orz/inkwell/releases) |
-| Browser | <https://sarosaka-orz.github.io/inkwell/> |
+| Browser | <https://sarosaka-orz.github.io/inkwell/app/> |
 
 > **macOS is unsigned for now.** On first launch, right-click **Inkwell.app** and choose **Open**, or run `xattr -dr com.apple.quarantine /Applications/Inkwell.app`.
 
@@ -162,7 +162,7 @@ pnpm build       # production build
 
 ## Web deployment
 
-Pushes to `main` build the browser app with `INKWELL_BASE=/inkwell/` and deploy `dist/` to GitHub Pages via [deploy-pages.yml](.github/workflows/deploy-pages.yml).
+Pushes to `main` build the landing page at `/inkwell/` and the browser app at `/inkwell/app/` with [deploy-pages.yml](.github/workflows/deploy-pages.yml). The app is built with `INKWELL_BASE=/inkwell/app/` into `dist/app/`, then `site/` is copied to the root of `dist/`.
 
 ## Desktop releases
 
