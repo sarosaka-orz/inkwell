@@ -8,6 +8,7 @@ import {
 import { themes } from "../../themes";
 import { FONT_OPTIONS, resolveFontStack } from "../../themes/fonts";
 import { formatShortcut } from "../../lib/platform";
+import { isTauri } from "../../services/tauriBridge";
 import { cn } from "../../lib/cn";
 import { Button, Field, Kbd, ModalShell, Switch } from "../ui";
 
@@ -35,6 +36,9 @@ const SHORTCUTS: { group: string; items: { keys: string; label: string }[] }[] =
       { keys: "Mod+F", label: "Find and replace" },
       { keys: "Mod+/", label: "Toggle source mode" },
       { keys: "Mod+Shift+E", label: "Toggle read mode" },
+      { keys: "Mod+-", label: "Zoom out" },
+      { keys: "Mod+=", label: "Zoom in" },
+      { keys: "Mod+0", label: "Reset zoom" },
       { keys: "Mod+\\", label: "Toggle library" },
       { keys: "Mod+,", label: "Settings" },
       { keys: "Mod+Shift+F", label: "Pin formatting tools" },
@@ -124,6 +128,9 @@ function PanelHeading({ title, description }: { title: string; description: stri
 function AppearancePanel() {
   const theme = useEditorStore((s) => s.theme);
   const setTheme = useEditorStore((s) => s.setTheme);
+  const settings = useEditorStore((s) => s.settings);
+  const updateSettings = useEditorStore((s) => s.updateSettings);
+  const desktop = isTauri();
 
   return (
     <div>
@@ -180,6 +187,24 @@ function AppearancePanel() {
           );
         })}
       </div>
+
+      {desktop && (
+        <div className="mt-8 border-t border-[var(--color-line)] pt-6">
+          <PanelHeading
+            title="Interface"
+            description="Scale the whole window, including the toolbar and document. This is separate from the document type size."
+          />
+          <RangeControl
+            label="Zoom"
+            hint={`${Math.round(settings.zoom * 100)}%`}
+            min={0.5}
+            max={2}
+            step={0.1}
+            value={settings.zoom}
+            onChange={(zoom) => updateSettings({ zoom })}
+          />
+        </div>
+      )}
     </div>
   );
 }

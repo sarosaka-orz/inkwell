@@ -25,6 +25,7 @@ export interface Settings {
   fontFamily: FontChoice;
   fontSize: number;
   lineHeight: number;
+  zoom: number;
   vimMode: boolean;
   spellCheck: boolean;
   autoSave: boolean;
@@ -171,11 +172,21 @@ function migrateFontFamily(value: unknown): FontChoice {
   return "literata";
 }
 
+export const MIN_ZOOM = 0.5;
+export const MAX_ZOOM = 2;
+
+/** Keep the interface zoom on a sane one-decimal grid. */
+export function clampZoom(value: unknown): number {
+  const numeric = typeof value === "number" && Number.isFinite(value) ? value : 1;
+  return Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, Math.round(numeric * 10) / 10));
+}
+
 const loadInitialSettings = (): Settings => {
   const defaults: Settings = {
     fontFamily: "literata",
     fontSize: 17,
     lineHeight: 1.7,
+    zoom: 1,
     vimMode: false,
     spellCheck: false,
     autoSave: true,
@@ -194,6 +205,7 @@ const loadInitialSettings = (): Settings => {
         ...defaults,
         ...parsed,
         fontFamily: migrateFontFamily(parsed.fontFamily),
+        zoom: clampZoom(parsed.zoom),
       };
     }
   } catch {
@@ -316,7 +328,8 @@ export const useEditorStore = create<EditorState>((set, get) => ({
   settings: initialSettings,
   updateSettings: (newSettings) => {
     set((state) => {
-      const updated = { ...state.settings, ...newSettings };
+      const merged = { ...state.settings, ...newSettings };
+      const updated = { ...merged, zoom: clampZoom(merged.zoom) };
       try {
         localStorage.setItem("inkwell:settings", JSON.stringify(updated));
       } catch {

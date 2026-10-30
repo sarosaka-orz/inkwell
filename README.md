@@ -92,6 +92,7 @@ On macOS, use **Cmd** instead of **Ctrl**.
 | `Ctrl+Shift+F` | Pin / Unpin Formatting Dock |
 | `Ctrl+/` | Toggle WYSIWYG / Source Code Mode |
 | `Ctrl+Shift+E` | Toggle Read (Preview) Mode |
+| `Ctrl+-` / `Ctrl+=` / `Ctrl+0` | Zoom out / in / reset the desktop window |
 | `Ctrl+B` | Bold (`**text**`) |
 | `Ctrl+I` | Italic (`*text*`) |
 | `Ctrl+K` | Insert Hyperlink |
@@ -99,6 +100,8 @@ On macOS, use **Cmd** instead of **Ctrl**.
 | `Ctrl+\` | Toggle Library Drawer |
 | `Ctrl+,` | Settings |
 | `Ctrl+Z` / `Ctrl+Shift+Z` | Undo / Redo |
+
+The desktop app remembers its interface zoom between sessions. Document font size is separate, under **Settings → Typography**.
 
 ---
 

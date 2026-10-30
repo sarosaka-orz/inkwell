@@ -3,6 +3,7 @@ import { useEditorStore } from "./store/editorStore";
 import { applyTheme } from "./themes/applyTheme";
 import { useAppCloseGuard } from "./hooks/useAppCloseGuard";
 import { useGlobalShortcuts } from "./hooks/useGlobalShortcuts";
+import { useGlobalZoom } from "./hooks/useGlobalZoom";
 import { getRecentFiles, isTauri, readFile } from "./services/tauriBridge";
 import { writeDrafts } from "./services/draftStore";
 import { TopBar } from "./components/Layout/TopBar";
@@ -26,6 +27,7 @@ export default function App() {
 
   useGlobalShortcuts();
   useAppCloseGuard();
+  useGlobalZoom();
 
   // Persist only dirty tabs; the draft clears itself once everything is saved.
   useEffect(() => {
