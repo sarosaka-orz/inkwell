@@ -4,7 +4,7 @@ A free, modern, open-source Markdown editor — built as a permanent alternative
 
 Inkwell is a cross-platform desktop application that renders Markdown seamlessly as you type, with live inline previews for headings, bold, italic, code, math, diagrams, tables, task lists, and more. No split-pane, no preview button — just write.
 
-**v0.2.0 adds desktop builds for Linux and macOS.** Download them from [GitHub Releases](https://github.com/sarosaka-orz/inkwell/releases). The browser build stays available at <https://sarosaka-orz.github.io/inkwell/>.
+**v0.2.1 adds a remembered interface zoom.** Desktop builds for Linux and macOS are on [GitHub Releases](https://github.com/sarosaka-orz/inkwell/releases). The browser build stays available at <https://sarosaka-orz.github.io/inkwell/>.
 
 > **Web build notes:** edits autosave to browser local storage; use **Export → Markdown/HTML** to download a real file. Folder browsing and native desktop integrations are desktop-only.
 
