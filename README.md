@@ -101,6 +101,8 @@ On macOS, use **Cmd** instead of **Ctrl**.
 | `Ctrl+,` | Settings |
 | `Ctrl+Z` / `Ctrl+Shift+Z` | Undo / Redo |
 
+The desktop app remembers its interface zoom between sessions. Document font size is separate, under **Settings → Typography**.
+
 ---
 
 ## Tech Stack

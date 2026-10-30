@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { useEditorStore } from "../store/editorStore";
 import { isEditableTarget } from "../lib/focusable";
 import { openDocument, saveActiveDocument } from "../services/documentActions";
+import { isTauri } from "../services/tauriBridge";
 
 /**
  * One shortcut authority for the whole app. The CodeMirror keymap only keeps
@@ -10,6 +11,27 @@ import { openDocument, saveActiveDocument } from "../services/documentActions";
 export function useGlobalShortcuts() {
   useEffect(() => {
     const onKeyDown = (event: KeyboardEvent) => {
+      // Interface zoom works everywhere in the desktop app, including while
+      // typing, so handle it before the editable-target guard.
+      if (isTauri() && (event.ctrlKey || event.metaKey) && !event.altKey) {
+        const zoomStore = useEditorStore.getState();
+        if (event.code === "Minus" || event.code === "NumpadSubtract") {
+          event.preventDefault();
+          zoomStore.updateSettings({ zoom: zoomStore.settings.zoom - 0.1 });
+          return;
+        }
+        if (event.code === "Equal" || event.code === "NumpadAdd") {
+          event.preventDefault();
+          zoomStore.updateSettings({ zoom: zoomStore.settings.zoom + 0.1 });
+          return;
+        }
+        if (event.code === "Digit0" || event.code === "Numpad0") {
+          event.preventDefault();
+          zoomStore.updateSettings({ zoom: 1 });
+          return;
+        }
+      }
+
       if (event.defaultPrevented) return;
       if (!(event.ctrlKey || event.metaKey)) return;
 

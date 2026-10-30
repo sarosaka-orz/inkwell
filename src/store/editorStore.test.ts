@@ -97,3 +97,16 @@ describe("source mode toggle", () => {
     expect(useEditorStore.getState().mode).toBe("source");
   });
 });
+
+describe("interface zoom", () => {
+  it("clamps to the supported range and rounds to one decimal", () => {
+    useEditorStore.getState().updateSettings({ zoom: 9 });
+    expect(useEditorStore.getState().settings.zoom).toBe(2);
+
+    useEditorStore.getState().updateSettings({ zoom: 0.1 });
+    expect(useEditorStore.getState().settings.zoom).toBe(0.5);
+
+    useEditorStore.getState().updateSettings({ zoom: 1.2000000000000002 });
+    expect(useEditorStore.getState().settings.zoom).toBe(1.2);
+  });
+});
